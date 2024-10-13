@@ -1,0 +1,5 @@
+[user]
+	email = alterGNU42@gmail.com
+	name = alterGNU42
+[diff]
+	tool = vimdiff

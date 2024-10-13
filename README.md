@@ -1,10 +1,7 @@
 # Dotfiles
 All my configuration files
 
-# ZSH
-## Install
-If ZSH is install (Oh-My-zsh), cp zshrc to ~/.zshrc
-## Personnal config
+# ZSH : `~/.zshrc`
 - Variables:
     - ${CLE}            : path to my usb key
     - ${VIMRC}          : path to my vim dotfile
@@ -20,3 +17,7 @@ If ZSH is install (Oh-My-zsh), cp zshrc to ~/.zshrc
     - gad arg1 <arg2>   : Git Add All, then commit with arg1 as commit name, and Git Push to arg2 (keep empty if only one distant repos)
     - gdtt <args>       : Git DiffTool whitout args (i use vimdiff cf .gitconfig), if args are files, will open git
       difftool without asking user if he's sure...
+
+# GIT : `~/.gitconfig`
+I use vimdiff as git difftool
+
