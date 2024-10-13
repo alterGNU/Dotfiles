@@ -24,3 +24,17 @@ All my configuration files
 # GIT : `~/.gitconfig`
 I use vimdiff as git difftool
 
+# VIM
+## Installation
+```bash
+if [ -d ~/.vim ];then mv ~/.vim ~/vim_archive_$(date +%Y%m%d%H%M%S);fi && git clone https://github.com/alterGNU42/.vim.git ~/.vim && echo -e "\n" | vim -c "PlugInstall" -c "qa" > /dev/null 2>&1
+```
+## Plugins
+- **alexandregv/norminette-vim**    : norminette checking plugin 
+- **itchyny/calendar.vim**          : Calendar Sync with google calendar and Tasks
+- **morhetz/gruvbox**               : Theme & coloration retro groove
+- **mzlogin/vim-markdown-toc**      : TOC for Markdown
+- **scrooloose/nerdtree**           : File system explorer
+- **scrooloose/syntastic**          : Syntax checking plugin
+- **vim-utils/vim-man**             : View man pages in vim
+- **vimwiki/vimwiki**               : Personal Wiki for Vim

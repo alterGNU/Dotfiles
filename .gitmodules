@@ -1,0 +1,3 @@
+[submodule "vim"]
+	path = vim
+	url = git@github.com:alterGNU42/.vim.git
