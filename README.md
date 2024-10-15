@@ -22,7 +22,7 @@ All my configuration files
       difftool without asking user if he's sure...
 
 # GIT : `~/.gitconfig`
-I use vimdiff as git difftool
+I use vimdiff as git difftool and have dt as difftool alias.
 
 # VIM
 ## Installation

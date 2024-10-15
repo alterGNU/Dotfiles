@@ -3,3 +3,5 @@
 	name = alterGNU42
 [diff]
 	tool = vimdiff
+[alias]
+	dt = difftool
