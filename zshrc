@@ -111,6 +111,7 @@ alias paco=/home/altergnu/francinette/tester.sh
 alias ccw="cc -Wall -Wextra -Werror -lbsd"
 alias gud='gaa && gc -m"UPDATE" && gp'
 alias wiki='vim ~/vimwiki/index.md'
+alias notes='vim ~/Notes/index.md'
 alias diary='vim ~/vimwiki/diary/diary.md'
 alias todo='vim ~/vimwiki/Todo/index.md'
 
