@@ -24,8 +24,6 @@ create_folder() { [[ ! -d ${FLD}/${1} ]] && mkdir -p ${FLD}/${1} ; }
 ln -s ${DOTPATH}/zshrc ${HOME}/.zshrc
 
 # -[ INSTALL VIM ]----------------------------------------------------------------------------------
-cd ${DOTPATH} && git submodule update --recursive
-cd ${ACTPWD}
 #[[ -h ~/.vim ]] && rm ${HOME}/.vim
 [[ -d ~/.vim ]] && { create_folder && mv ${HOME}/.vim ${FLD}/vim ; }
 ln -s ${DOTPATH}/vim ${HOME}/.vim
