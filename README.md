@@ -2,7 +2,7 @@
 All my configuration files
 
 # TODO
-- [ ] Add `install_altergnu42_config.sh` install my configuration , making backup folder with old dotfiles before replacing them.
+- [ ] Add `install.sh` install my configuration , making backup folder with old dotfiles before replacing them.
 
 # ZSH : `~/.zshrc`
 - Variables:
