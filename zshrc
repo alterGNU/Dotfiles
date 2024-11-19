@@ -1,11 +1,11 @@
 # ========================================================================================================== #
-#                                     ______ _____ _    _ _____   _____                                      #
-#                                    |___  // ____| |  | |  __ \ / ____|                                     #
-#                                       / /| (___ | |__| | |__) | |                                          #
-#                                      / /  \___ \|  __  |  _  /| |                                          #
-#                                     / /__ ____) | |  | | | \ \| |____                                      #
-#                                    /_____|_____/|_|  |_|_|  \_\\_____|                                     #
-#                                                                                             by alterGNU    #
+#                                   ______   _____   _    _   _____     _____                                #
+#                                  |___  /  / ____| | |  | | |  __ \   / ____|                               #
+#                                     / /  | (___   | |__| | | |__) | | |                                    #
+#                                    / /    \___ \  |  __  | |  _  /  | |                                    #
+#                                   / /__   ____) | | |  | | | | \ \  | |____                                #
+#                                  /_____| |_____/  |_|  |_| |_|  \_\  \_____|                               #
+#                                                                                            by alterGNU     #
 # ========================================================================================================== #
  
 # =[ EXPORTS ]================================================================================================
@@ -15,6 +15,7 @@ export PATH="$HOME/.local/bin:${PATH}"
 export PATH=/home/altergnu/.local/funcheck/host:$PATH
 export CLE=/media/${USERNAME}/Lexar/
 export VIMRC=/home/${USERNAME}/.vim/vimrc
+export FPATH=./cmds:$PATH
 
 # =[ ZSH SETTINGS ]===========================================================================================
 # Set name of the theme to load --- if set to "random", it will load a random theme each time oh-my-zsh is 
@@ -31,6 +32,14 @@ plugins=(git)
 # -[ SOURCE ]-------------------------------------------------------------------------------------------------
 source $ZSH/oh-my-zsh.sh
 
+# =[ FUNCTIONS ]==============================================================================================
+autoload -Uz
+autoload -Uz gac         # git add commit
+autoload -Uz gdft        # git difftool
+autoload -Uz gus         # git update submodule
+autoload -Uz guw         # git update wiki
+autoload -Uz update_gpw  # update folder Github-Projects-Wikis
+
 # =[ ALIAS ]==================================================================================================
 alias francinette=/home/altergnu/francinette/tester.sh
 alias paco=/home/altergnu/francinette/tester.sh
@@ -46,4 +55,3 @@ alias gpwu=update_gpw
 alias is_a_gitrepo="git rev-parse --is-inside-work-tree &>/dev/null && echo yes || echo no"
 alias gitrepo_is_uptodate="git diff-index --quiet HEAD -- 2> /dev/null && echo yes || echo no"
 
-# =[ FUNCTIONS ]==============================================================================================
