@@ -23,6 +23,7 @@ create_bckup_folder() { [[ ! -d ${FLD}/${1} ]] && mkdir -p ${FLD}/${1} ; }
 # ============================================================================================================
  
 # -[ INSTALL ZSHRC ]------------------------------------------------------------------------------------------
+sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" ${DOTPATH}/zshrc
 [[ -h ~/.zshrc ]] && rm ${HOME}/.zshrc
 [[ -f ~/.zshrc ]] && { create_bckup_folder && mv ${HOME}/.zshrc ${FLD}/zshrc ; }
 ln -s ${DOTPATH}/zshrc ${HOME}/.zshrc

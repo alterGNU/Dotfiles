@@ -1,0 +1,3 @@
+# -[ GDFT() ]-------------------------------------------------------------------------------------------------
+#GitDifFTool: no args=gitdiff all actual rep, args=gitdiff all files in arg1
+gdft(){ [[ -n "${1}" ]] && for i in ${@} ; do git difftool -y ${i} ; done || git difftool; }

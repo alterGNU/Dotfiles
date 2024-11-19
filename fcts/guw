@@ -1,0 +1,26 @@
+# -[ GUW() ]--------------------------------------------------------------------------------------------------
+# git_update_wiki (update master submodule branch)
+guw()
+{
+    local repo_name=$(basename ${PWD})
+    if git rev-parse --is-inside-work-tree &>/dev/null;then
+        local actual_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) 
+        [[ ${actual_branch} != "edit" ]] && git checkout edit
+        if ! git diff-index --quiet HEAD -- 2> /dev/null ;then 
+            gac "UPDATE ${1}" origin edit
+            git checkout master
+            if [[ $(git rev-parse --abbrev-ref HEAD 2>/dev/null) == "master" ]];then
+                git merge -X theirs edit -m"Auto-merge 'edit'->'master'"
+                wlc -g .
+                gac "UPDATE ${1}" origin master
+                git checkout edit
+            else
+                echo "Something goes wrong while trying to go to the 'master' branch"
+            fi
+        else
+            echo "git wiki :'${repo_name}', branch '${actual_branch}' is already up_to_date"
+        fi
+    else
+        echo "${repo_name} is not a git repo"
+    fi
+}

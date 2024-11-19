@@ -15,7 +15,8 @@ export PATH="$HOME/.local/bin:${PATH}"
 export PATH=/home/altergnu/.local/funcheck/host:$PATH
 export CLE=/media/${USERNAME}/Lexar/
 export VIMRC=/home/${USERNAME}/.vim/vimrc
-export FPATH=./cmds:$PATH
+export DOTPATH=/home/altergnu/Projects/Dotfiles
+[[ -d ${DOTPATH}/fcts ]] && export FPATH=${DOTPATH}/fcts:$FPATH
 
 # =[ ZSH SETTINGS ]===========================================================================================
 # Set name of the theme to load --- if set to "random", it will load a random theme each time oh-my-zsh is 
@@ -33,7 +34,7 @@ plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
 # =[ FUNCTIONS ]==============================================================================================
-autoload -Uz
+autoload -Uz hi          # git add commit
 autoload -Uz gac         # git add commit
 autoload -Uz gdft        # git difftool
 autoload -Uz gus         # git update submodule
