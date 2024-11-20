@@ -34,7 +34,6 @@ plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
 # =[ FUNCTIONS ]==============================================================================================
-autoload -Uz hi          # git add commit
 autoload -Uz gac         # git add commit
 autoload -Uz gdft        # git difftool
 autoload -Uz gus         # git update submodule
