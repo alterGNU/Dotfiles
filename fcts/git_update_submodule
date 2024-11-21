@@ -1,0 +1,55 @@
+# -[ GUS() ]--------------------------------------------------------------------------------------------------
+# Fct to update gaacp the submodule and gaacp the parent git repo
+# wih argument, give path_to_submodule
+# wihtout argument, use inside a submodule repo to update the submodule
+# TODO : test if submodule was modifyed somewhere else and not here to see if it works
+git_update_submodule()
+{
+    # check argument
+    local path_to_folder=$(pwd)
+    if [[ -n ${1} ]];then 
+        local path_to_folder=$(realpath ${1})
+        if [[ ! -d ${path_to_folder} ]];then
+            echo -e "\033[0;31m'${path_to_folder}' is not a folder\033[0m"
+            return 1
+        fi
+    fi
+    # not in a git repo
+    if ! git -C ${path_to_folder} rev-parse --is-inside-work-tree &>/dev/null;then
+        echo -e "\033[0;31m'${path_to_folder}' is not a git repo\033[0m"
+        return 2
+    fi
+    local submodule=$(git -C ${path_to_folder} rev-parse --show-toplevel)
+    local parent_repo=$(git -C ${path_to_folder} rev-parse --show-superproject-working-tree 2>/dev/null) 
+    # parent not a git repo
+    if [[ -z "${parent_repo}" ]];then
+        echo -e "\033[0;31m'${submodule}' is not a git submodule\033[0m"
+        return 3
+    fi
+    # check if submodule is uptodate
+    if [[ -z $(git -C ${submodule} status --porcelain) ]];then
+        if git -C ${git_dir} diff --exit-code > /dev/null;then
+            echo -e "\033[0;32m'${submodule}' is already up_to_date\033[0m"
+            return 0
+        else
+            local parent_repo_origin=$(git -C "${parent_repo}" remote 2>/dev/null | head -n 1)
+            local parent_repo_branch=$(git -C "${parent_repo}" rev-parse --abbrev-ref HEAD 2>/dev/null) 
+            git -C "${parent_repo}" add "${submodule}"
+            git -C "${parent_repo}" commit -m"UPDATE submodule:${submodule##*\/}"
+            if [[ -n ${parent_repo_origin} ]] && git -C "${parent_repo}" push "${parent_repo_origin}" "${parent_repo_branch}"
+            echo -e "\033[0;32m'${submodule##*\/}' had commits not followed by ${parent_repo##*\/}, the two repo. are now in sync.\033[0m"
+        fi
+    else
+        local submodule_origin=$(git -C "${submodule}" remote 2>/dev/null | head -n 1)
+        local submodule_branch=$(git -C "${submodule}" rev-parse --abbrev-ref HEAD 2>/dev/null) 
+        git -C ${submodule} add --all
+        git -C ${submodule} commit -m"UPDATE"
+        [[ -n ${submodule_origin} ]] && git -C "${submodule}" push "${submodule_origin}" "${submodule_branch}"
+        local parent_repo_origin=$(git -C "${parent_repo}" remote 2>/dev/null | head -n 1)
+        local parent_repo_branch=$(git -C "${parent_repo}" rev-parse --abbrev-ref HEAD 2>/dev/null) 
+        git -C "${parent_repo}" add "${submodule}"
+        git -C "${parent_repo}" commit -m"UPDATE submodule:${submodule##*\/}"
+        if [[ -n ${parent_repo_origin} ]] && git -C "${parent_repo}" push "${parent_repo_origin}" "${parent_repo_branch}"
+        echo -e "\033[0;32mThe '${submodule##*\/}', submodule of '${parent_repo##*\/}', has been successfully updated!\033[0m"
+    fi
+}
