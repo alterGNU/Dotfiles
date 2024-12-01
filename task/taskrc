@@ -13,7 +13,7 @@ data.location=~/.local/share/task
 hooks.location=~/.config/task/hooks
 
 # -[ COLOR THEME ]--------------------------------------------------------------------------------------------
-include ./gruvbox.theme
+include ~/.config/task/gruvbox.theme
 
 # -[ UDA ]----------------------------------------------------------------------------------------------------
 uda.duree.type=duration

@@ -8,7 +8,7 @@
 # - with wget : `sh -c "$(wget -qO- https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
 # - with fetch: `sh -c "$(fetch -o - https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
 # 
-# V-REQUIS
+# PRE-REQUIS
 # - Dotfiles submodules uptodate :`git clone --recurse-submodules -j8 git@github.com:alterGNU/Dotfiles.git`
 # - zsh already install (Oh my zsh too)
 #
@@ -18,8 +18,9 @@
 #
 # TODO :
 # - [ ] Add pre-requis test (zsh + oh-my-zsh + vim + git) cf Ubuntu_install install script
-# - [ ] Usemode with git-clone
-# - [ ] Usemode with curl or wget
+# - [ ] Usemode with git-clone (no git clone needed)
+# - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
+# - [ ] Add interactive argument (ask user before each step if install needed/wanted)
 # - [X] Add step print (start install chapter:zshrc , vim, git , etc)
 # ============================================================================================================
  
@@ -169,6 +170,7 @@ config_taskw()
     save_file "${HOME}/.taskrc" "taskrc_from_home"
     save_folder "${HOME}/.config/task" "task_from_config"
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
+    create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
 }
 # ============================================================================================================
 # MAIN
