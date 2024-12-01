@@ -1,9 +1,0 @@
-# -[ GUS() ]--------------------------------------------------------------------------------------------------
-# git_update_submodule (update edit submodule branch and GPW) using gac()
-gus()
-{
-    [[ -n ${1} ]] && local comment=${1} || local comment="UPDATE"
-    local parent=$(dirname $PWD)
-    gac update origin edit
-    git -C ${parent} add --all && git -C ${parent} commit -m"${comment}" && git -C ${parent} push
-}

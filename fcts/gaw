@@ -1,0 +1,23 @@
+# -[ GAW() ]--------------------------------------------------------------------------------------------------
+# Git_Add_Wiki : add a wiki to actual dir
+# Usage : 
+# - take one argument : the github project name
+gaw ()
+{
+    # test if arg1:
+    #   - not empty
+    #       -> else exit err1
+    #   - is a github repo
+    #       -> else exit err2
+    #   - is a github repo that have an active wiki
+    #       -> else exit err3
+    # test if actual dir
+    #   - is a git repo
+    #       -> else exit err4
+    #   - is up_to_date locally (all changes are committed)
+    #       -> else exit err5 : asking for 
+    #   - is up_to_date with remote (all changes are committed)
+    #   
+    #
+    # git clone inside the actual repo
+}

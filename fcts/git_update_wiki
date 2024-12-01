@@ -1,5 +1,5 @@
 # -[ GUW() ]--------------------------------------------------------------------------------------------------
-# git_update_wiki (update master submodule branch)
+# Git_Update_Wiki (update master submodule branch)
 guw()
 {
     local repo_name=$(basename ${PWD})
@@ -10,9 +10,9 @@ guw()
             gac "UPDATE ${1}" origin edit
             git checkout master
             if [[ $(git rev-parse --abbrev-ref HEAD 2>/dev/null) == "master" ]];then
-                git merge -X theirs edit -m"Auto-merge 'edit'->'master'"
+                git reset --hard edit
                 wlc -g .
-                gac "UPDATE ${1}" origin master
+                gaa && gc -m"UPDATE ${1}" && git push --force origin master
                 git checkout edit
             else
                 echo "Something goes wrong while trying to go to the 'master' branch"

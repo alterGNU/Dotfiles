@@ -1,0 +1,16 @@
+# -[ GDFT() ]-------------------------------------------------------------------------------------------------
+#GitDifFTool: no args=gitdiff all actual rep, args=gitdiff all files in arg1
+git_difftool()
+{
+    local repo_name=$(basename ${PWD})
+    if git rev-parse --is-inside-work-tree &>/dev/null;then
+        local actual_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) 
+        if ! git diff-index --quiet HEAD -- 2> /dev/null ;then
+            [[ -n "${1}" ]] && for i in ${@} ; do git difftool -y ${i} ; done || git difftool
+        else
+            echo "On repo:'${repo_name}', branch '${actual_branch}'is up_to_date"
+        fi
+    else
+        echo "${repo_name} is not a git repo"
+    fi
+}
