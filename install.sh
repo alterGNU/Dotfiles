@@ -183,6 +183,17 @@ install_custom_cmd_wlc()
         echol "A command named '${R}wlc${E}' already exists:${M}$(which wlc)${E}"
     fi
 }
+# -[ INSTALL_CUSTOM_CMD_GET_TASK_DONE_BY_DATE ]---------------------------------------------------------------
+install_custom_cmd_taskw()
+{
+    local found=$(command -v get_task_done_by_date 2>&1 >/dev/null && echo no || echo yes)
+    if [[ "${found}" == "yes" ]];then
+        [[ ! -d "${HOME}/.local/bin" ]] && mkdir -p "${HOME}/.local/bin"
+        create_symlink ${DOTPATH}/cmds/taskw/get_task_done_by_date.sh ${HOME}/.local/bin/get_task_done_by_date
+    else
+        echol "A command named '${R}get_task_done_by_date${E}' already exists:${M}$(which wlc)${E}"
+    fi
+}
 # ============================================================================================================
 # MAIN
 # ============================================================================================================
@@ -190,4 +201,5 @@ install_step "${B}ZSH config.${E}" "config_zsh"
 install_step "${B}GIT config.${E}" "config_git"
 install_step "${B}VIM config.${E}" "config_vim"
 install_step "${B}TASKWARRIOR config.${E}" "config_taskw"
-install_step "${B}Custom Command: wlc${E}" "install_custom_cmd_wlc"
+install_step "${B}Custom Commands: wlc${E}" "install_custom_cmd_wlc"
+install_step "${B}Custom Commands: taskw${E}" "install_custom_cmd_taskw"
