@@ -11,13 +11,13 @@
 # =[ EXPORTS ]================================================================================================
 export ZSH="$HOME/.oh-my-zsh"
 export VIMRC=/home/${USERNAME}/.vim/vimrc
+export CLE=/media/${USERNAME}/Lexar/
 # -[ DOTPATH ]------------------------------------------------------------------------------------------------
 export DOTPATH=/home/altergnu/Projects/Dotfiles
 [[ -d ${DOTPATH}/fcts ]] && export FPATH=${DOTPATH}/fcts:$FPATH    # ADD $DOTPATH to $FPATH
 # -[ PATH ]---------------------------------------------------------------------------------------------------
 export PATH="$HOME/.local/bin:${PATH}"                             # ADD ~/.local/bin to $PATH
 export PATH=/home/altergnu/.local/funcheck/host:$PATH              # ADD funckeck to $PATH
-export CLE=/media/${USERNAME}/Lexar/
 
 # =[ ZSH SETTINGS ]===========================================================================================
 # Set name of the theme to load --- if set to "random", it will load a random theme each time oh-my-zsh is 
@@ -50,6 +50,7 @@ twe(){ task ${1} export | tee >(xsel -ib) ; }
 
 # =[ ALIAS ]==================================================================================================
 # -[ VIM ]----------------------------------------------------------------------------------------------------
+#alias vim="vim -u ${DOTPATH}/vim/vimrc"
 alias wiki='[[ -d ${HOME}/Wiki ]] && vim ~/Wiki/index.md || echo "alias not available here"'
 alias diary='[[ -d ${HOME}/Wiki/diary ]] && vim ~/Wiki/diary/diary.md || echo "alias not available here"'
 alias todo='[[ -f ${HOME}/Wiki/Todo/index.md ]] && vim ${HOME}/Wiki/Todo/index.md || echo "alias not available here"'

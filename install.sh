@@ -158,7 +158,7 @@ config_vim()
     save_folder "${HOME}/.vim" "vim_from_home"
     save_file "${HOME}/.vimrc" "vimrc_from_home"
     save_folder "${HOME}/.config/vim" "vim_from_config"
-    create_symlink ${DOTPATH}/vim ${HOME}/.config/vim
+    create_symlink ${DOTPATH}/vim ${HOME}/.vim
     create_symlink ${DOTPATH}/vim/vimrc ${HOME}/.vimrc
     echo -e "\n" | vim -c "PlugInstall" -c "qa" > /dev/null 2>&1
     echo -e "\n" | vim -c "PlugUpdate" -c "qa" > /dev/null 2>&1
@@ -172,6 +172,17 @@ config_taskw()
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
 }
+# -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
+install_custom_cmd_wlc()
+{
+    local found=$(command -v wlc 2>&1 >/dev/null && echo no || echo yes)
+    if [[ "${found}" == "yes" ]];then
+        [[ ! -d "${HOME}/.local/bin" ]] && mkdir -p "${HOME}/.local/bin"
+        create_symlink ${DOTPATH}/cmds/WLC/wlc.sh ${HOME}/.local/bin/wlc
+    else
+        echol "A command named '${R}wlc${E}' already exists:${M}$(which wlc)${E}"
+    fi
+}
 # ============================================================================================================
 # MAIN
 # ============================================================================================================
@@ -179,3 +190,4 @@ install_step "${B}ZSH config.${E}" "config_zsh"
 install_step "${B}GIT config.${E}" "config_git"
 install_step "${B}VIM config.${E}" "config_vim"
 install_step "${B}TASKWARRIOR config.${E}" "config_taskw"
+install_step "${B}Custom Command: wlc${E}" "install_custom_cmd_wlc"
