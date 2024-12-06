@@ -50,7 +50,8 @@ twe(){ task ${1} export | tee >(xsel -ib) ; }
 
 # =[ ALIAS ]==================================================================================================
 # -[ VIM ]----------------------------------------------------------------------------------------------------
-#alias vim="vim -u ${DOTPATH}/vim/vimrc"
+alias today="vim -c VimwikiMakeDiaryNote"
+alias yesterday="vim -c VimwikiMakeYesterdayDiaryNote"
 alias wiki='[[ -d ${HOME}/Wiki ]] && vim ~/Wiki/index.md || echo "alias not available here"'
 alias diary='[[ -d ${HOME}/Wiki/diary ]] && vim ~/Wiki/diary/diary.md || echo "alias not available here"'
 alias todo='[[ -f ${HOME}/Wiki/Todo/index.md ]] && vim ${HOME}/Wiki/Todo/index.md || echo "alias not available here"'
