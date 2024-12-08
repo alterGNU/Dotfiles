@@ -34,6 +34,9 @@ plugins=(git)
 # -[ SOURCE ]-------------------------------------------------------------------------------------------------
 source $ZSH/oh-my-zsh.sh
 
+# =[ BINDING KEY ]============================================================================================
+bindkey \^U backward-kill-line
+
 # =[ FUNCTIONS ]==============================================================================================
 #autoload -Uz git_add_all_commit_push   # `gaa && gc -m"arg1" ; git push "arg2" "arg3"`
 #autoload -Uz git_difftool              # if no arg:`git difftool $PWD`, else `git difftool *argV`

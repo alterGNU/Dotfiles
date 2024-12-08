@@ -155,6 +155,7 @@ config_git()
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
 config_vim()
 {
+    #TODO Check if vim installed and if it +clipboard compatible (install vim, install vim-gtk3)
     save_folder "${HOME}/.vim" "vim_from_home"
     save_file "${HOME}/.vimrc" "vimrc_from_home"
     save_folder "${HOME}/.config/vim" "vim_from_config"
