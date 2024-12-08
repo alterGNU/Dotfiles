@@ -156,6 +156,7 @@ config_git()
 config_vim()
 {
     #TODO Check if vim installed and if it +clipboard compatible (install vim, install vim-gtk3)
+    #TODO Check if cscope installed (if not install sudo apt install cscope)
     save_folder "${HOME}/.vim" "vim_from_home"
     save_file "${HOME}/.vimrc" "vimrc_from_home"
     save_folder "${HOME}/.config/vim" "vim_from_config"
