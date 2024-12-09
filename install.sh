@@ -120,7 +120,7 @@ save_file()
 {
     del_symlink "${1}"
     if [[ -f "${1}" ]];then
-        create_bckup_file
+        create_bckup_folder
         [[ -n "${2}" ]] && local dst_filename="${2}" || local dst_filename=$(basename "${1}")
         mv "${1}" "${FLD}/${dst_filename}" && echol "${U}Create backup-file${E}: '${FLD}/${dst_filename}'"
     fi
