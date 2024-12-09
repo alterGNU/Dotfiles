@@ -17,11 +17,11 @@
 # - VAR-ENV : DOTPATH (set at "" by default), is the path to the Dotfiles folder
 #
 # TODO :
-# - [ ] Add pre-requis test (zsh + oh-my-zsh + vim + git) cf Ubuntu_install install script
-# - [ ] Usemode with git-clone (no git clone needed)
-# - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
-# - [ ] Add interactive argument (ask user before each step if install needed/wanted)
-# - [X] Add step print (start install chapter:zshrc , vim, git , etc)
+#   - [ ] Add pre-requis test (zsh + oh-my-zsh + vim + git) cf Ubuntu_install install script
+#   - [ ] Usemode with git-clone (no git clone needed)
+#   - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
+#   - [ ] Add interactive argument (ask user before each step if install needed/wanted)
+#   - [X] Add step print (start install chapter:zshrc , vim, git , etc)
 # ============================================================================================================
  
 # ============================================================================================================
@@ -33,11 +33,12 @@ BCK="${HOME}/backups"                            # Path of the backup folder
 FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"         # Name of the backup folder
 DOTPATH=$(dirname $(realpath ${0}))              # Path of the Dotfile folder
 # =[ COLORS ]=================================================================================================
-R="\033[0;31m"                                   # START RED
-G="\033[0;32m"                                   # START GREEN
-M="\033[0;33m"                                   # START BROWN
-Y="\033[0;93m"                                   # START YELLOW
-B="\033[0;36m"                                   # START BLUE
+R="\033[1;31m"                                   # START RED
+G="\033[1;32m"                                   # START GREEN
+M="\033[1;33m"                                   # START BROWN
+U="\033[4;29m"                                   # START UNDERSCORED
+B="\033[1;36m"                                   # START BLUE
+BB="\033[1;96m"                                  # START BLUE
 E="\033[0m"                                      # END color balise
 # =[ BOX ]====================================================================================================
   H="═"                                          # Horizontal
@@ -99,109 +100,190 @@ exec_anim()
 }
 # -[ DEL_SYMLINK ]--------------------------------------------------------------------------------------------
 # If arg1 is a path to a synbolic link, delete it
-del_symlink() { [[ -h "${1}" ]] && rm "${1}" ; }
+del_symlink()
+{ 
+    if [[ -h "${1}" ]];then
+        local solved_link=$(readlink -f "${1}")
+        rm "${1}"
+        echol "${U}rm sym-link${E}: '${BB}${1}${E}' ➟  '${M}${solved_link}${E}'"
+    fi
+}
 # -[ CREATE_BCKUP_FOLDER() ]----------------------------------------------------------------------------------
 # create a backup folder if not already created
 create_bckup_folder() { [[ ! -d ${FLD}/${1} ]] && mkdir -p ${FLD}/${1} ; }
 # -[ CREATE SYN-LINK ]----------------------------------------------------------------------------------------
 # create a sym-link from arg1 to arg2
-create_symlink() { ln -s ${1} ${2} && echol "create sym-link '${B}${2}${E}' ➟ '${M}${1}${E}'" ; }
+create_symlink() { ln -s ${1} ${2} && echol "${U}Create sym-link${E}: '${BB}${2}${E}' ➟ '${M}${1}${E}'" ; }
 # -[ SAVE_FILE ]----------------------------------------------------------------------------------------------
 # If arg1 is a path to a file, make a backup. The backup name can be manually provide by arg2 (opt)
 save_file()
 {
-    if [[ -h "${1}" ]];then
-        rm ${1} && echol "rm sym-link '${1}'"
-    elif [[ -f "${1}" ]];then
+    del_symlink "${1}"
+    if [[ -f "${1}" ]];then
         create_bckup_file
         [[ -n "${2}" ]] && local dst_filename="${2}" || local dst_filename=$(basename "${1}")
-        mv "${1}" "${FLD}/${dst_filename}" && echol " - Create backup-file:'${FLD}/${dst_filename}'"
+        mv "${1}" "${FLD}/${dst_filename}" && echol "${U}Create backup-file${E}: '${FLD}/${dst_filename}'"
     fi
 }
 # -[ SAVE_FOLDER ]--------------------------------------------------------------------------------------------
 # If arg1 is a path to a folder, make a backup. The backup name can be manually provide by arg2 (opt)
 save_folder()
 {
-    if [[ -h "${1}" ]];then
-        rm ${1} && echol "rm sym-link '${1}'"
-    elif [[ -f "${1}" ]];then
+    del_symlink "${1}"
+    if [[ -f "${1}" ]];then
         create_bckup_folder
         [[ -n "${2}" ]] && local dst_foldername="${2}" || local dst_foldername=$(basename "${1}")
-        mv "${1}" "${FLD}/${dst_foldername}" && echol " - Create backup-folder:'${FLD}/${dst_foldername}'"
+        mv "${1}" "${FLD}/${dst_foldername}" && echol "${U}Create backup-folder${E}:'${FLD}/${dst_foldername}'"
     fi
 }
+# -[ IS_INSTALLED ]-------------------------------------------------------------------------------------------
+# Check if a command is installed
+command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
+
 # -[ INSTALL_STEP ]-------------------------------------------------------------------------------------------
 # install step : arg1=step title displayed arg2=install function name.
 install_step()
 {
     print_title "${1}"
-    exec_anim "${2}"
+    ${2}
     print_last
 }
 # =[ CONFIG-FCTS ]============================================================================================
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
 config_zsh()
 {
+    print_title "${B}ZSH config.${E}"
+    # check if zsh is installed, else install it
+    if command_exists "zsh";then
+        echol "${G}zsh${E} was already installed"
+    else
+        exec_anim "sudo apt install -y zsh"
+        echol "${G}zsh${E} installed."
+    fi
+    # check if oh-my-zsh is installed, else install it
+    if [ -d "$HOME/.oh-my-zsh" ]; then
+        echol "${B}Oh-My-Zsh${E} was already installed."
+    else
+        exec_anim 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+        echol "${E}Oh-My-Zsh${E} installed."
+    fi
+    # Set zsh the default shell
+    if [ "${SHELL}" != "$(command -v zsh)" ]; then
+        chsh -s "$(command -v zsh)" && echol "${G}zsh${E} successfully set as default shell." || echol "zsh wasn't set as default shell"
+    else
+        echol "${G}zsh${E} was already the default shell."
+    fi
+    # Add real $DOTPATH value in zshrc + save old dotfiles + create link
     sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" ${DOTPATH}/zshrc
     save_file "${HOME}/.zshrc"
     create_symlink "${DOTPATH}/zshrc" "${HOME}/.zshrc"
+    print_last
 }
 # -[ CONFIG_GIT ]---------------------------------------------------------------------------------------------
 config_git()
 {
+    print_title "${B}GIT config.${E}"
+    # check if git is installed, else install it
+    if command_exists "git";then
+        echol "${G}git${E} is already installed."
+    else
+        exec_anim "sudo apt install git"
+        echol "${G}git${E} successfully installed."
+    fi
+    # Make save old dotfiles + Create symlink to gitconfig file
     save_file "${HOME}/.gitconfig"
     create_symlink ${DOTPATH}/gitconfig ${HOME}/.gitconfig
+    # TODO All custom git command
+    print_last
 }
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
 config_vim()
 {
-    #TODO Check if vim installed and if it +clipboard compatible (install vim, install vim-gtk3)
-    #TODO Check if cscope installed (if not install sudo apt install cscope)
+    print_title "${B}VIM config.${E}"
+    # check if vim is installed, else install it
+    if command_exists "vim";then
+        echol "${G}vim${E} was already installed."
+    else
+        exec_anim "sudo apt install vim"
+        echol "${G}vim${E} installed."
+    fi
+    # Check if vim is +clipboard compatible, else install vim-gtk3
+    if vim --version | grep -q "+clipboard";then
+        echol "${G}vim${E} is clipboard compatible."
+    else
+        exec_anim "sudo apt install -y vim-gtk3"
+        echol "${B}vim-gtk3${E} package successfully installed."
+    fi
+    #Check if cscope installed, else install cscope
+    if command_exists "cscope";then
+        echol "${G}cscope${E} was already installed."
+    else
+        exec_anim "sudo apt install cscope"
+        echol "${G}cscope${E} was successfully installed."
+    fi
+    # Save old dotfiles + create synlinks to ~/.vim/ and ~/.vimrc then install vim plugin
     save_folder "${HOME}/.vim" "vim_from_home"
     save_file "${HOME}/.vimrc" "vimrc_from_home"
     save_folder "${HOME}/.config/vim" "vim_from_config"
     create_symlink ${DOTPATH}/vim ${HOME}/.vim
     create_symlink ${DOTPATH}/vim/vimrc ${HOME}/.vimrc
-    echo -e "\n" | vim -c "PlugInstall" -c "qa" > /dev/null 2>&1
-    echo -e "\n" | vim -c "PlugUpdate" -c "qa" > /dev/null 2>&1
+    exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'"
+    echol "Vim plugin installed."
+    print_last
 }
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
 config_taskw()
 {
+    print_title "${B}TASKWARRIOR config.${E}"
+    # Check if task installed, else install cscope
+    if command_exists "task";then
+        echol "${G}taskwarrior${E} was already installed."
+    else
+        exec_anim "sudo apt install taskwarrior"
+        echol "${G}taskwarrior${E} was successfully installed."
+    fi
+    # TODO configure taskd
+    # Check if timewarrior installed, else install timewarrior
+    if command_exists "timew";then
+        echol "${G}timewarrior${E} was already installed."
+    else
+        exec_anim "sudo apt install timewarrior"
+        echol "${G}timewarrior${E} was successfully installed."
+    fi
+    # Save old dotfile and create link
     save_folder "${HOME}/.task/hook" "taskhook_from_home"
     save_file "${HOME}/.taskrc" "taskrc_from_home"
     save_folder "${HOME}/.config/task" "task_from_config"
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
-}
-# -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
-install_custom_cmd_wlc()
-{
-    local found=$(command -v wlc 2>&1 >/dev/null && echo no || echo yes)
-    if [[ "${found}" == "yes" ]];then
-        [[ ! -d "${HOME}/.local/bin" ]] && mkdir -p "${HOME}/.local/bin"
-        create_symlink ${DOTPATH}/cmds/WLC/wlc.sh ${HOME}/.local/bin/wlc
+    # Install custom command
+    if command_exists "get_task_done_by_date";then
+        echol "Custom command: ${G}get_task_done_by_date${E} is already install."
     else
-        echol "A command named '${R}wlc${E}' already exists:${M}$(which wlc)${E}"
-    fi
-}
-# -[ INSTALL_CUSTOM_CMD_GET_TASK_DONE_BY_DATE ]---------------------------------------------------------------
-install_custom_cmd_taskw()
-{
-    local found=$(command -v get_task_done_by_date 2>&1 >/dev/null && echo no || echo yes)
-    if [[ "${found}" == "yes" ]];then
         [[ ! -d "${HOME}/.local/bin" ]] && mkdir -p "${HOME}/.local/bin"
         create_symlink ${DOTPATH}/cmds/taskw/get_task_done_by_date.sh ${HOME}/.local/bin/get_task_done_by_date
-    else
-        echol "A command named '${R}get_task_done_by_date${E}' already exists:${M}$(which wlc)${E}"
+        echol "Custom command: ${G}get_task_done_by_date${E} was successfully installed."
     fi
+    print_last
+}
+# -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
+install_other_custom_cmd()
+{
+    print_title "${B}Other Custom Commands:${E}"
+    if command_exists "wlc";then
+        echol "${G}wlc${E} is already install."
+    else
+        [[ ! -d "${HOME}/.local/bin" ]] && mkdir -p "${HOME}/.local/bin"
+        create_symlink ${DOTPATH}/cmds/WLC/wlc.sh ${HOME}/.local/bin/wlc
+        echol "${G}wlc${E} was successfully installed."
+    fi
+    print_last
 }
 # ============================================================================================================
 # MAIN
 # ============================================================================================================
-install_step "${B}ZSH config.${E}" "config_zsh"
-install_step "${B}GIT config.${E}" "config_git"
-install_step "${B}VIM config.${E}" "config_vim"
-install_step "${B}TASKWARRIOR config.${E}" "config_taskw"
-install_step "${B}Custom Commands: wlc${E}" "install_custom_cmd_wlc"
-install_step "${B}Custom Commands: taskw${E}" "install_custom_cmd_taskw"
+config_zsh
+config_git
+config_vim
+config_taskw
+install_other_custom_cmd
