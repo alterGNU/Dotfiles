@@ -24,10 +24,13 @@ usage()
 {
     local txt=${1}
     [[ ${#} -eq 2 ]] && local exit_nb=${2} || local exit_nb=42
-    echo -e "${R0}Wrong Usage, err_${exit_nb}${R0}: ${txt}${E}\n${V0}Usage${E}:  \`${B0}./get_task_done_by_date ${M0}<date-format>${E}\`"
+    echo -e "${R0}Wrong Usage, err_${exit_nb}${R0}: ${txt}${E}\n${V0}Usage${E}:  \`${B0}./get_task_done_by_date <${M0}date-format${B0}>${E}\`"
+    echo -e "- ${B0}<${M0}date-format${B0}> accepted are 'yyyy-mm-dd', 'today', 'yesterday' ... .${E} "
+    echo -e "- ${B0}Example:${E}"
+    echo -e "  ${R0}\$> ${E}get_task_done_by_date 2024-11-24"
     echo -e "  ID UUID     Created    Completed  Age Project Tags Description"
     echo -e "  -- -------- ---------- ---------- --- ------- ---- ---------------"
-    echo -e "   - 43d4d081 2024-11-23 2024-11-24 9d  GPW.Vim wiki Add vim to GPW as submodules"
+    echo -e "   - 43d4d081 2024-11-23 2024-11-24 9d  GPW.Vim wiki Add vim to GPW as submodule"
     echo -e "   - 95ee4fa5 2024-11-24 2024-11-24 8d  GPW.Vim wiki UPDATE Vim.wiki"
     exit ${exit_nb}
 }

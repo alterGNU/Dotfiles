@@ -5,3 +5,7 @@
 	tool = vimdiff
 [alias]
 	dt = difftool
+    st = status
+    d = diff
+[core]
+    editor = vim

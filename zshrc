@@ -35,7 +35,7 @@ plugins=(git)
 source $ZSH/oh-my-zsh.sh
 
 # =[ BINDING KEY ]============================================================================================
-bindkey \^U backward-kill-line
+bindkey \^U backward-kill-line # Make zsh Ctrl_u behave like bash to delete all before cursor in line
 
 # =[ FUNCTIONS ]==============================================================================================
 #autoload -Uz git_add_all_commit_push   # `gaa && gc -m"arg1" ; git push "arg2" "arg3"`
