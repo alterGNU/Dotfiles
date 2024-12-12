@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 # ============================================================================================================
 # INSTALL SCRIPT
@@ -136,19 +136,64 @@ save_folder()
         mv "${1}" "${FLD}/${dst_foldername}" && echol "${U}Create backup-folder${E}:'${FLD}/${dst_foldername}'"
     fi
 }
-# -[ IS_INSTALLED ]-------------------------------------------------------------------------------------------
+# -[ COMMAND_EXISTS ]-----------------------------------------------------------------------------------------
 # Check if a command is installed
 command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
-
-# -[ INSTALL_STEP ]-------------------------------------------------------------------------------------------
-# install step : arg1=step title displayed arg2=install function name.
-install_step()
+# -[ INSTALL_CMD ]--------------------------------------------------------------------------------------------
+# Check if command is installed, else install it
+install_cmd()
 {
-    print_title "${1}"
-    ${2}
-    print_last
+    if command_exists "${1}";then
+        echol "${G}${1}${E} already installed."
+    else
+        yes | sudo apt install ${1} 
+        echol "${G}${1}${E} installed successfully."
+    fi
+}
+# -[ PACKAGE_INSTALLED ]--------------------------------------------------------------------------------------
+# Check if a package was installed
+pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "install ok installed" ; }
+# -[ INSTALL_PCK ]--------------------------------------------------------------------------------------------
+# Check if a package is installed, else install it
+install_pck()
+{
+    if pck_installed "${1}";then
+        echol "${M}${1}${E} package already installed."
+    else
+        yes | sudo apt install ${1} 
+        pkexec dpkg -i ${1}.deb && echol "${G}${1}.deb${E} installed successfully" || echol 
+        echol "${R}Can not install ${M}${1}${R} package. Something want wrong${E}"
+    fi
 }
 # =[ CONFIG-FCTS ]============================================================================================
+# -[ CHECK_TOOLS ]--------------------------------------------------------------------------------------------
+# check all needed tools, if not installed, install them
+check_tools()
+{
+    print_title "${B}Install required tools.${E}"
+    # Check if apt command is install
+    if command_exists "apt";then
+        echol "${G}apt${E} already installed"
+    else
+        pkexec dpkg -i apt.deb && echol "${G}apt${E} installed successfully"
+    fi
+    # Check if yes command is install
+    if command_exists "yes";then
+        echol "${G}yes${E} already installed"
+    else
+        sudo apt install yes && echol "${G}yes${E} installed successfully"
+    fi
+    local TOOLS=("curl" "git" "tree")
+    for pkg in ${TOOLS[@]};do
+        if is_installed "${pkg}";then
+            echo "${G}${pkg}${E} already installed"
+        else
+            exec_anim "yes | sudo apt install ${pkg}"
+            echol "${G}${pkg}${E} installed successfully"
+        fi
+    done
+    print_last
+}
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
 config_zsh()
 {
@@ -282,8 +327,13 @@ install_other_custom_cmd()
 # ============================================================================================================
 # MAIN
 # ============================================================================================================
-config_zsh
-config_git
-config_vim
-config_taskw
-install_other_custom_cmd
+if command_exists "dpkg";then
+    check_tools
+    config_zsh
+    config_git
+    config_vim
+    config_taskw
+    install_other_custom_cmd
+else
+    echo "${R}This installation script works only on debian-distro for now${E}"
+fi
