@@ -5,6 +5,7 @@
 Dotfiles/
    ├── cmds/                            # Custom command ...
    │   ├── git/                         # ... related to git.
+   │   ├── taskw/                       # ... related to task and time warrior.
    │   └── WLC/                         # ... Wiki Link Convertor.
    ├── gitconfig                        # git dotfile (sym-link ~/.gitconfig)
    ├── install.sh                       # install script
@@ -26,7 +27,7 @@ They're two cases:
     - The entire project has been cloned and the install.sh script is located in the folder:
     ```bash
     LOCDOT=<path_to_where_to_clone/the_folder_name> && \
-    git clone --recurse-submodules -j8 git@github.com:alterGNU/Dotfiles.git ${LOCDOT} && \
+    git clone --recurse-submodules -j8 https://github.com/alterGNU/Dotfiles.git ${LOCDOT} && \
     ${LOCDOT}/install.sh
     ```
 - Use `install.sh` script **BEFORE GIT CLONE**:
