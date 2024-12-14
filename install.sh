@@ -5,9 +5,6 @@
 # install my conf.: make backup folder with actual dotfiles before replacing them with sym-links to my dotfiles
 # - after `git clone https://github.com/alterGNU/Dotfiles.git` just do `./Dorfiles/install.sh`
 # - with curl : `sh -c "$(curl -fsSL https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
-# - with wget : `sh -c "$(wget -qO- https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
-# - with fetch: `sh -c "$(fetch -o - https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
-# 
 # PRE-REQUIS
 # - Dotfiles submodules uptodate :`git clone --recurse-submodules -j8 git@github.com:alterGNU/Dotfiles.git`
 # - zsh already install (Oh my zsh too)
@@ -17,16 +14,21 @@
 # - VAR-ENV : DOTPATH (set at "" by default), is the path to the Dotfiles folder
 #
 # TODO :
-#   - [ ] Add pre-requis test (zsh + oh-my-zsh + vim + git) cf Ubuntu_install install script
+#   - [ ] Create func add_cmd_folder that take only a folder that contains fun/script and exec add_custom_cmd automatically (filename - ext = cmd name)
+#   - [ ] Add Dotfiles/cmds/git/* 
+#   - [ ] Add taskserver package and config file (server & client)
 #   - [ ] Usemode with git-clone (no git clone needed)
 #   - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
 #   - [ ] Add interactive argument (ask user before each step if install needed/wanted)
-#   - [X] Add step print (start install chapter:zshrc , vim, git , etc)
 # ============================================================================================================
  
 # ============================================================================================================
 # VAR
 # ============================================================================================================
+# Commands needed
+PRE_REQUIS_CMDS=("curl")
+# Bin Folder to add to PATH ENV-VAR.
+BINPATH="${HOME}/.local/bin"
 # =[ PATH ]===================================================================================================
 LEN=110                                          # Textwidth
 BCK="${HOME}/backups"                            # Path of the backup folder
@@ -38,6 +40,7 @@ G="\033[1;32m"                                   # START GREEN
 M="\033[1;33m"                                   # START BROWN
 U="\033[4;29m"                                   # START UNDERSCORED
 B="\033[1;36m"                                   # START BLUE
+# Commands needed
 BB="\033[1;96m"                                  # START BLUE
 E="\033[0m"                                      # END color balise
 # =[ BOX ]====================================================================================================
@@ -113,7 +116,16 @@ del_symlink()
 create_bckup_folder() { [[ ! -d ${FLD}/${1} ]] && mkdir -p ${FLD}/${1} ; }
 # -[ CREATE SYN-LINK ]----------------------------------------------------------------------------------------
 # create a sym-link from arg1 to arg2
-create_symlink() { ln -s ${1} ${2} && echol "${U}Create sym-link${E}: '${BB}${2}${E}' ➟ '${M}${1}${E}'" ; }
+create_symlink()
+{
+    ln -s ${1} ${2} 
+    if [[ ${?} -eq 0]];then
+        echol "${U}Create sym-link${E}: '${BB}${2}${E}' ➟ '${M}${1}${E}'"
+    else
+        echol "${R}Something went wrong while creating sym-link: '${BB}${2}${R}' ➟ '${M}${1}${E}'"
+        return 3;
+    fi
+}
 # -[ SAVE_FILE ]----------------------------------------------------------------------------------------------
 # If arg1 is a path to a file, make a backup. The backup name can be manually provide by arg2 (opt)
 save_file()
@@ -143,11 +155,13 @@ command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
 # Check if command is installed, else install it
 install_cmd()
 {
-    if command_exists "${1}";then
-        echol "${G}${1}${E} already installed."
+    local cmd_name=${1}
+    [[ -z ${2} ]] $$ local pck_name=${1} || local pck_name=${2}
+    if command_exists "${cmd_name}";then
+        echol "${G}${pck_name}${E} already installed."
     else
-        yes | sudo apt install ${1} 
-        echol "${G}${1}${E} installed successfully."
+        exec_anim "yes | sudo apt install ${pck_name}"
+        echol "${G}${pck_name}${E} installed successfully."
     fi
 }
 # -[ PACKAGE_INSTALLED ]--------------------------------------------------------------------------------------
@@ -160,63 +174,57 @@ install_pck()
     if pck_installed "${1}";then
         echol "${M}${1}${E} package already installed."
     else
-        yes | sudo apt install ${1} 
-        pkexec dpkg -i ${1}.deb && echol "${G}${1}.deb${E} installed successfully" || echol 
-        echol "${R}Can not install ${M}${1}${R} package. Something want wrong${E}"
+        exec_anim "pkexec dpkg -i ${1}.deb && echol '${G}${1}.deb${E} installed successfully' || echol '${R}Can not install ${M}${1}${R} package. Something want wrong${E}'"
+    fi
+}
+# -[ ADD_CUSTOM_CMD() ]---------------------------------------------------------------------------------------
+# Add custom command located at $arg1 named $arg2
+add_custom_cmd()
+{
+    local filepath=${1}
+    local cmd_name=${2}
+    if command_exists "${cmd_name}";then
+        echol "Custom command: ${G}${cmd_name}${E} is already install."
+    else
+        [[ ! -d "${BINPATH}" ]] && mkdir -p "${BINPATH}"
+        create_symlink ${filepath} ${BINPATH}/${cmd_name}
     fi
 }
 # =[ CONFIG-FCTS ]============================================================================================
-# -[ CHECK_TOOLS ]--------------------------------------------------------------------------------------------
+# -[ install_pre_requis_cmds ]--------------------------------------------------------------------------------------------
 # check all needed tools, if not installed, install them
-check_tools()
+install_pre_requis_cmds()
 {
     print_title "${B}Install required tools.${E}"
-    # Check if apt command is install
-    if command_exists "apt";then
-        echol "${G}apt${E} already installed"
-    else
-        pkexec dpkg -i apt.deb && echol "${G}apt${E} installed successfully"
-    fi
-    # Check if yes command is install
-    if command_exists "yes";then
-        echol "${G}yes${E} already installed"
-    else
-        sudo apt install yes && echol "${G}yes${E} installed successfully"
-    fi
-    local TOOLS=("curl" "git" "tree")
-    for pkg in ${TOOLS[@]};do
-        if is_installed "${pkg}";then
-            echo "${G}${pkg}${E} already installed"
-        else
-            exec_anim "yes | sudo apt install ${pkg}"
-            echol "${G}${pkg}${E} installed successfully"
-        fi
-    done
+    # Install apt if not already here
+    install_pck "apt"
+    for pkg in ${PRE_REQUIS_CMDS[@]};do exec_anim "install_cmd ${pkg}" ; done
     print_last
 }
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
 config_zsh()
 {
     print_title "${B}ZSH config.${E}"
-    # check if zsh is installed, else install it
-    if command_exists "zsh";then
-        echol "${G}zsh${E} was already installed"
+    # install zsh if not already installed
+    install_cmd "zsh"
+    # set zsh as default shell if not already
+    if [[ "${SHELL}" != "$(which zsh)" ]]then;
+        chsh -s $(which zsh) && echol "Zsh successfully set as default shell" || { echol "${R}Something went wrong will setting Zsh as default shell" && exit 3 ; }
     else
-        exec_anim "sudo apt install -y zsh"
-        echol "${G}zsh${E} installed."
+        echol "Zsh already set as default shell."
     fi
     # check if oh-my-zsh is installed, else install it
     if [ -d "$HOME/.oh-my-zsh" ]; then
         echol "${B}Oh-My-Zsh${E} was already installed."
     else
-        exec_anim 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
-        echol "${E}Oh-My-Zsh${E} installed."
+        exec_anim 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended'
+        [[ ${?} -eq 0 ]] && echol "${E}Oh-My-Zsh${E} installed." || echol "${R}Something went wrong will downloading Oh-My-Zsh.${E}"
     fi
     # Set zsh the default shell
-    if [ "${SHELL}" != "$(command -v zsh)" ]; then
-        chsh -s "$(command -v zsh)" && echol "${G}zsh${E} successfully set as default shell." || echol "zsh wasn't set as default shell"
+    if [ "${SHELL}" != "$(which zsh)" ]; then
+        exec $(which zsh)
     else
-        echol "${G}zsh${E} was already the default shell."
+        echol "Already on zsh."
     fi
     # Add real $DOTPATH value in zshrc + save old dotfiles + create link
     sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" ${DOTPATH}/zshrc
@@ -229,12 +237,7 @@ config_git()
 {
     print_title "${B}GIT config.${E}"
     # check if git is installed, else install it
-    if command_exists "git";then
-        echol "${G}git${E} is already installed."
-    else
-        exec_anim "sudo apt install git"
-        echol "${G}git${E} successfully installed."
-    fi
+    exec_anim "install_cmd git"
     # Make save old dotfiles + Create symlink to gitconfig file
     save_file "${HOME}/.gitconfig"
     create_symlink ${DOTPATH}/gitconfig ${HOME}/.gitconfig
@@ -246,25 +249,13 @@ config_vim()
 {
     print_title "${B}VIM config.${E}"
     # check if vim is installed, else install it
-    if command_exists "vim";then
-        echol "${G}vim${E} was already installed."
-    else
-        exec_anim "sudo apt install vim"
-        echol "${G}vim${E} installed."
-    fi
+    exec_anim "install_cmd vim"
+    exec_anim "install_cmd cscope"
     # Check if vim is +clipboard compatible, else install vim-gtk3
     if vim --version | grep -q "+clipboard";then
         echol "${G}vim${E} is clipboard compatible."
     else
-        exec_anim "sudo apt install -y vim-gtk3"
-        echol "${B}vim-gtk3${E} package successfully installed."
-    fi
-    #Check if cscope installed, else install cscope
-    if command_exists "cscope";then
-        echol "${G}cscope${E} was already installed."
-    else
-        exec_anim "sudo apt install cscope"
-        echol "${G}cscope${E} was successfully installed."
+        exec_anim "install_cmd vim-gtk3"
     fi
     # Save old dotfiles + create synlinks to ~/.vim/ and ~/.vimrc then install vim plugin
     save_folder "${HOME}/.vim" "vim_from_home"
@@ -272,29 +263,17 @@ config_vim()
     save_folder "${HOME}/.config/vim" "vim_from_config"
     create_symlink ${DOTPATH}/vim ${HOME}/.vim
     create_symlink ${DOTPATH}/vim/vimrc ${HOME}/.vimrc
-    exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'"
-    echol "Vim plugin installed."
+    exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" &&  echol "Vim plugins installed."
     print_last
 }
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
 config_taskw()
 {
     print_title "${B}TASKWARRIOR config.${E}"
-    # Check if task installed, else install cscope
-    if command_exists "task";then
-        echol "${G}taskwarrior${E} was already installed."
-    else
-        exec_anim "sudo apt install taskwarrior"
-        echol "${G}taskwarrior${E} was successfully installed."
-    fi
-    # TODO configure taskd
-    # Check if timewarrior installed, else install timewarrior
-    if command_exists "timew";then
-        echol "${G}timewarrior${E} was already installed."
-    else
-        exec_anim "sudo apt install timewarrior"
-        echol "${G}timewarrior${E} was successfully installed."
-    fi
+    # Check if task and time warrior are installed, else install them
+    exec_anim "install_pck task taskwarrior"
+    exec_anim "install_pck timew timewarrior"
+    # TODO add taskserveur (client & serveur)
     # Save old dotfile and create link
     save_folder "${HOME}/.task/hook" "taskhook_from_home"
     save_file "${HOME}/.taskrc" "taskrc_from_home"
@@ -302,38 +281,26 @@ config_taskw()
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
     # Install custom command
-    if command_exists "get_task_done_by_date";then
-        echol "Custom command: ${G}get_task_done_by_date${E} is already install."
-    else
-        [[ ! -d "${HOME}/.local/bin" ]] && mkdir -p "${HOME}/.local/bin"
-        create_symlink ${DOTPATH}/cmds/taskw/get_task_done_by_date.sh ${HOME}/.local/bin/get_task_done_by_date
-        echol "Custom command: ${G}get_task_done_by_date${E} was successfully installed."
-    fi
+    add_custom_cmd "${DOTPATH}/cmds/taskw/get_task_done_by_date.sh" "get_task_done_by_date"
     print_last
 }
 # -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
 install_other_custom_cmd()
 {
     print_title "${B}Other Custom Commands:${E}"
-    if command_exists "wlc";then
-        echol "${G}wlc${E} is already install."
-    else
-        [[ ! -d "${HOME}/.local/bin" ]] && mkdir -p "${HOME}/.local/bin"
-        create_symlink ${DOTPATH}/cmds/WLC/wlc.sh ${HOME}/.local/bin/wlc
-        echol "${G}wlc${E} was successfully installed."
-    fi
+    add_custom_cmd "${DOTPATH}/cmds/WLC/wlc.sh" "wlc"
     print_last
 }
 # ============================================================================================================
 # MAIN
 # ============================================================================================================
 if command_exists "dpkg";then
-    check_tools
+    install_pre_requis_cmds
     config_zsh
     config_git
     config_vim
     config_taskw
     install_other_custom_cmd
 else
-    echo "${R}This installation script works only on debian-distro for now${E}"
+    echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
 fi
