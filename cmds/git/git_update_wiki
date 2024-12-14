@@ -1,7 +1,7 @@
-# -[ GUW() ]--------------------------------------------------------------------------------------------------
-# Git_Update_Wiki (update master submodule branch)
-guw()
+# -[ GIT_UPDATE_WIKI ]----------------------------------------------------------------------------------------
+git_update_wiki()
 {
+    # Git_Update_Wiki (update master submodule branch)
     local repo_name=$(basename ${PWD})
     if git rev-parse --is-inside-work-tree &>/dev/null;then
         local actual_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) 

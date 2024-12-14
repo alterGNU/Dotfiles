@@ -1,5 +1,4 @@
-# -[ GDFT() ]-------------------------------------------------------------------------------------------------
-#GitDifFTool: no args=gitdiff all actual rep, args=gitdiff all files in arg1
+# -[ GIT_DIFFTOOL ]-------------------------------------------------------------------------------------------
 git_difftool()
 {
     local repo_name=$(basename ${PWD})

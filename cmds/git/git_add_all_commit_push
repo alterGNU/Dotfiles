@@ -1,7 +1,7 @@
-# -[ GAC() ]--------------------------------------------------------------------------------------------------
-# gaa && gc -m"arg1" ; git push "arg2" "arg3"
+# -[ GIT_ADD_ALL_COMMIT_PUSH ]--------------------------------------------------------------------------------
 git_add_all_commit_push()
 {
+    # gaa && gc -m"arg1" ; git push "arg2" "arg3"
     local repo_name=$(basename ${PWD})
     if git rev-parse --is-inside-work-tree &>/dev/null;then
         [[ -n ${1} ]] && local comment="${1}" || local comment="UPDATE"

@@ -1,10 +1,10 @@
-# -[ GUS() ]--------------------------------------------------------------------------------------------------
-# Fct to update gaacp the submodule and gaacp the parent git repo
-# wih argument, give path_to_submodule
-# wihtout argument, use inside a submodule repo to update the submodule
-# TODO : test if submodule was modifyed somewhere else and not here to see if it works
+# -[ GIT_UPDATE_SUBMODULE ]-----------------------------------------------------------------------------------
 git_update_submodule()
 {
+    # Fct to update gaacp the submodule and gaacp the parent git repo
+    # wih argument, give path_to_submodule
+    # wihtout argument, use inside a submodule repo to update the submodule
+    # TODO : test if submodule was modifyed somewhere else and not here to see if it works
     # check argument
     local path_to_folder=$(pwd)
     if [[ -n ${1} ]];then 

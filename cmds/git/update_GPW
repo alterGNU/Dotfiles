@@ -1,7 +1,7 @@
-# -[ UPDATE_GPW() ]-------------------------------------------------------------------------------------------
-# update all GPW submodules using guw()
+# -[ UPDATE_GPW ]---------------------------------------------------------------------------------------------
 update_GPW()
 {
+    # update all GPW submodules using guw()
     local old_pwd="${PWD}"
     local gpw="${HOME}/GPW/"
     if [[ -d ${gpw} ]];then

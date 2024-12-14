@@ -1,8 +1,5 @@
-# -[ GAW() ]--------------------------------------------------------------------------------------------------
-# Git_Add_Wiki : add a wiki to actual dir
-# Usage : 
-# - take one argument : the github project name
-gaw ()
+# -[ GIT_ADD_WIKI ]-------------------------------------------------------------------------------------------
+git_add_wiki()
 {
     # test if arg1:
     #   - not empty
