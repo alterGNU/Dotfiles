@@ -1,6 +1,6 @@
 [submodule "vim"]
 	path = vim
-	url = git@github.com:alterGNU42/.vim.git
+	url = https://github.com/alterGNU/Vim.git
 [submodule "cmds/WLC"]
 	path = cmds/WLC
-	url = git@github.com:alterGNU/WikiLinkConvertor.git
+	url = https://github.com/alterGNU/WikiLinkConvertor.git
