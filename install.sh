@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # ============================================================================================================
 # INSTALL SCRIPT
@@ -119,7 +119,7 @@ create_bckup_folder() { [[ ! -d ${FLD}/${1} ]] && mkdir -p ${FLD}/${1} ; }
 create_symlink()
 {
     ln -s ${1} ${2} 
-    if [[ ${?} -eq 0]];then
+    if [[ ${?} -eq 0 ]];then
         echol "${U}Create sym-link${E}: '${BB}${2}${E}' ➟ '${M}${1}${E}'"
     else
         echol "${R}Something went wrong while creating sym-link: '${BB}${2}${R}' ➟ '${M}${1}${E}'"
@@ -156,7 +156,7 @@ command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
 install_cmd()
 {
     local cmd_name=${1}
-    [[ -z ${2} ]] $$ local pck_name=${1} || local pck_name=${2}
+    [[ -z ${2} ]] && local pck_name=${1} || local pck_name=${2}
     if command_exists "${cmd_name}";then
         echol "${G}${pck_name}${E} already installed."
     else
@@ -172,7 +172,7 @@ pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "inst
 install_pck()
 {
     if pck_installed "${1}";then
-        echol "${M}${1}${E} package already installed."
+        echol "${G}${1}${E} package already installed."
     else
         exec_anim "pkexec dpkg -i ${1}.deb && echol '${G}${1}.deb${E} installed successfully' || echol '${R}Can not install ${M}${1}${R} package. Something want wrong${E}'"
     fi
@@ -184,7 +184,7 @@ add_custom_cmd()
     local filepath=${1}
     local cmd_name=${2}
     if command_exists "${cmd_name}";then
-        echol "Custom command: ${G}${cmd_name}${E} is already install."
+        echol "${U}Custom command:${E} ${G}${cmd_name}${E} is already install."
     else
         [[ ! -d "${BINPATH}" ]] && mkdir -p "${BINPATH}"
         create_symlink ${filepath} ${BINPATH}/${cmd_name}
@@ -208,7 +208,7 @@ config_zsh()
     # install zsh if not already installed
     install_cmd "zsh"
     # set zsh as default shell if not already
-    if [[ "${SHELL}" != "$(which zsh)" ]]then;
+    if [[ "${SHELL}" != "$(which zsh)" ]];then
         chsh -s $(which zsh) && echol "Zsh successfully set as default shell" || { echol "${R}Something went wrong will setting Zsh as default shell" && exit 3 ; }
     else
         echol "Zsh already set as default shell."
@@ -271,8 +271,8 @@ config_taskw()
 {
     print_title "${B}TASKWARRIOR config.${E}"
     # Check if task and time warrior are installed, else install them
-    exec_anim "install_pck task taskwarrior"
-    exec_anim "install_pck timew timewarrior"
+    exec_anim "install_cmd task taskwarrior"
+    exec_anim "install_cmd timew timewarrior"
     # TODO add taskserveur (client & serveur)
     # Save old dotfile and create link
     save_folder "${HOME}/.task/hook" "taskhook_from_home"
