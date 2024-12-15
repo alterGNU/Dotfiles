@@ -51,4 +51,4 @@ else
     git submodule add --force ${1} ${2}
 fi
 [[ ${?} -ne 0 ]] && usage "Can not add submodule." 4
-git add --all && git commit -m"ADD Submodule"
+git submodule update --init --recursive && git add --all && git commit -m"ADD Submodule"

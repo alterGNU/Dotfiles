@@ -32,7 +32,7 @@ declare -A PRE_REQUIS_CMDS=( ["curl"]="curl" ["tee"]="coreutils" ["xsel"]="xsel"
 # Bin Folder to add to PATH ENV-VAR.
 CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"
 # =[ PATH ]===================================================================================================
-LEN=155                                          # Textwidth
+LEN=110                                          # Textwidth
 BCK="${HOME}/backups"                            # Path of the backup folder
 FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"         # Name of the backup folder
 DOTPATH=$(dirname $(realpath ${0}))              # Path of the Dotfile folder
@@ -224,10 +224,11 @@ add_all_cmds_and_aliases_in()
         echol "folder ${CUSTOM_CMD_BIN_FOLDER} created." "3"
     fi
     # Check if bin_folder in var-env path, else add it.
-    if [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]];then
-        export PATH="$PATH:${CUSTOM_CMD_BIN_FOLDER}"
-        echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH." "3"
-    fi
+    # TODO : add/write in zshrc file!
+    #if [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]];then
+    #    export PATH="$PATH:${CUSTOM_CMD_BIN_FOLDER}" 
+    #    echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH." "3"
+    #fi
     # Clean bim_folder of broken sym-link
     clean_custom_cmd_bin_folder ${CUSTOM_CMD_BIN_FOLDER}
     for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
@@ -317,7 +318,7 @@ config_vim()
     exec_anim "install_cmd cscope"
     # Check if vim is +clipboard compatible, else install vim-gtk3
     if vim --version | grep -q "+clipboard";then
-        echol "${G}vim${E} is clipboard compatible."
+        echol "${G}vim${E} is clipboard compatible." "3"
     else
         exec_anim "install_cmd vim-gtk3"
     fi
@@ -328,9 +329,9 @@ config_vim()
     save_folder "${HOME}/.config/vim" "vim_from_config"
 
     echol "${Y}Set new config.:${E}"
-    create_symlink ${DOTPATH}/vim ${HOME}/.vim
-    create_symlink ${DOTPATH}/vim/vimrc ${HOME}/.vimrc
-    exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" &&  echol "Vim plugins installed."
+    create_symlink "${DOTPATH}/vim" "${HOME}/.vim"
+    create_symlink "${DOTPATH}/vim/vimrc" "${HOME}/.vimrc"
+    exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" && echol "Vim plugins installed." "3"
     add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/vim"
     print_last
 }
@@ -338,25 +339,29 @@ config_vim()
 config_taskw()
 {
     print_title "TASKWARRIOR config."
-    # install pre-requis
+    
+    echol "${Y}Install commands/packages needed${E}:"
     exec_anim "install_cmd task taskwarrior"
     exec_anim "install_cmd timew timewarrior"
     # TODO add taskserveur (client & serveur)
-    # Save old dotfile and create link
+    
+    echol "${Y}Save&Remove old config.:${E}"
     save_folder "${HOME}/.task/hook" "taskhook_from_home"
     save_file "${HOME}/.taskrc" "taskrc_from_home"
     save_folder "${HOME}/.config/task" "task_from_config"
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
-    # Install custom command
+   
+    echol "${Y}Set new config.:${E}"
     add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/taskw"
     print_last
 }
 # -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
 install_other_custom_cmd()
 {
-    print_title "Other Custom Commands:"
-    #add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/WLC"
+    print_title "Other Project/Tools:"
+    echol "${Y}Install Custom Commands and Aliases:${E}"
+    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/wlc"
     print_last
 }
 # ============================================================================================================
