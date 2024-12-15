@@ -46,9 +46,9 @@ if ! git rev-parse --is-inside-work-tree &>/dev/null;then
     usage "Not in a git repo, ${M0}${PWD}${E} is not a git repo!" 3
 fi
 if [ ${#} -eq 1 ];then
-    git submodule add ${1}
+    git submodule add --force ${1}
 else
-    git submodule add ${1} ${2}
+    git submodule add --force ${1} ${2}
 fi
 [[ ${?} -ne 0 ]] && usage "Can not add submodule." 4
 git add --all && git commit -m"ADD Submodule"
