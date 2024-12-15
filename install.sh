@@ -15,7 +15,7 @@
 #
 # TODO :
 #   - [ ] Create func add_cmd_folder that take only a folder that contains fun/script and exec add_custom_cmd automatically (filename - ext = cmd name)
-#   - [ ] Add Dotfiles/cmds/git/* 
+#   - [ ] Add Dotfiles/custom_cmds_and_aliases/git/* 
 #   - [ ] Add taskserver package and config file (server & client)
 #   - [ ] Usemode with git-clone (no git clone needed)
 #   - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
@@ -28,7 +28,7 @@
 # ============================================================================================================
 # Commands needed key=cmd_name value=package to install
 # coreutils = tee, date, direname, realpath
-declare -A PRE_REQUIS_CMDS=( ["curl"]="curl" ["tee"]="coreutils" ["xsel"]="xsel" ["find"]="findutils")
+declare -A PRE_REQUIS_CMDS=( ["curl"]="curl" ["tee"]="coreutils" ["xsel"]="xsel" ["find"]="findutils" ["grep"]="grep" )
 # Bin Folder to add to PATH ENV-VAR.
 CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"
 # =[ PATH ]===================================================================================================
@@ -187,26 +187,16 @@ clean_custom_cmd_bin_folder()
     if [[ -d ${CUSTOM_CMD_BIN_FOLDER} ]];then
         for symlink in "${CUSTOM_CMD_BIN_FOLDER}"/*;do
             if [ -L "${symlink}" ] && [ ! -e ${symlink} ];then
-                rm "${symlink}" && echol "Removing dead symlink: '${symlink}'"
+                del_symlink ${symlink}
             fi
         done
     fi
 }
 # -[ ADD_CUSTOM_CMD() ]---------------------------------------------------------------------------------------
 # Add custom command located at $arg1 named $arg2 
-# Exemple: add_custom_cmd "${DOTPATH}/cmds/taskw/get_task_done_by_date.sh" "gtdbd"
+# Exemple: add_custom_cmd "${DOTPATH}/custom_cmds_and_aliases/taskw/get_task_done_by_date.sh" "gtdbd"
 add_custom_cmd()
 {
-    # Check if bin_folder exists, else create it.
-    if [[ ! -d "${CUSTOM_CMD_BIN_FOLDER}" ]];then
-        mkdir -p "${CUSTOM_CMD_BIN_FOLDER}"
-        echol "folder ${CUSTOM_CMD_BIN_FOLDER} created."
-    fi
-    # Check if bin_folder in var-env path, else add it.
-    if [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]];then
-        export PATH="$PATH:${CUSTOM_CMD_BIN_FOLDER}"
-        echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH."
-    fi
     local filepath=${1}
     local cmd_name=${2}
     if command_exists "${cmd_name}";then
@@ -217,17 +207,33 @@ add_custom_cmd()
 }
 # -[ ADD_ALL_CUSTOM_CMD ]-------------------------------------------------------------------------------------
 # Add all scripts found in folder as a custom command
-# Exemple: add_all_cmds_and_aliases_in "${DOTPATH}/cmds/taskw/"
+# Exemple: add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/taskw/"
 add_all_cmds_and_aliases_in()
 {
     [[ ${#} -ne 1 ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, this function take one argument:${M}<path_to_folder>${R} and ${#} arg given${E}" && exit 4 ; }
     [[ ! -d ${1} ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, arg:${M}<${1}>${R}is not a folder${E}" && exit 5 ; }
+    # Check if bin_folder exists, else create it.
+    if [[ ! -d "${CUSTOM_CMD_BIN_FOLDER}" ]];then
+        mkdir -p "${CUSTOM_CMD_BIN_FOLDER}"
+        echol "folder ${CUSTOM_CMD_BIN_FOLDER} created."
+    fi
+    # Check if bin_folder in var-env path, else add it.
+    if [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]];then
+        export PATH="$PATH:${CUSTOM_CMD_BIN_FOLDER}"
+        echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH."
+    fi
+    # Clean bim_folder of broken sym-link
     clean_custom_cmd_bin_folder ${CUSTOM_CMD_BIN_FOLDER}
     for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
     if [[ -f "${1}/aliases" ]];then
         local dir_name=${1##*\/}
-        echo -e "source \"${1}/aliases\"\t\t# ADD ${dir_name} aliases" >> "${DOTPATH}/zshrc"
-        source "${DOTPATH}/zshrc"
+        local line_to_add="source \"${1}/aliases\"\t\t# ADD ${dir_name} aliases"
+        if grep -Fxq "${line_to_add}" "${DOTPATH}/zshrc";then
+            echol "${dir_name}/aliases already in zshrc file."
+        else
+            echol "${dir_name}/aliases add successfully to zshrc file."
+            echo -e "${line_to_add}" >> "${DOTPATH}/zshrc"
+        fi
     fi
 }
 # =[ CONFIG-FCTS ]============================================================================================
@@ -282,7 +288,7 @@ config_git()
     save_file "${HOME}/.gitconfig"
     create_symlink ${DOTPATH}/gitconfig ${HOME}/.gitconfig
     # Install custom command
-    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/git"
+    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/git"
     print_last
 }
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
@@ -306,7 +312,7 @@ config_vim()
     create_symlink ${DOTPATH}/vim/vimrc ${HOME}/.vimrc
     exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" &&  echol "Vim plugins installed."
     # Install custom command
-    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/vim"
+    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/vim"
     print_last
 }
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
@@ -324,14 +330,14 @@ config_taskw()
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
     # Install custom command
-    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/taskw"
+    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/taskw"
     print_last
 }
 # -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
 install_other_custom_cmd()
 {
     print_title "${B}Other Custom Commands:${E}"
-    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/WLC"
+    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/WLC"
     print_last
 }
 # ============================================================================================================
