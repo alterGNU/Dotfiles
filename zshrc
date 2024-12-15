@@ -50,3 +50,6 @@ source $ZSH/oh-my-zsh.sh
 source "/home/altergnu/Projects/Dotfiles/custom_cmds_and_aliases/git/aliases"		# ADD git aliases
 source "/home/altergnu/Projects/Dotfiles/custom_cmds_and_aliases/vim/aliases"		# ADD vim aliases
 source "/home/altergnu/Projects/Dotfiles/custom_cmds_and_aliases/taskw/aliases"		# ADD taskw aliases
+source "/home/altergnu/Projects/Dotfiles/custom_cmds_and_aliases/git/aliases"		# ADD git aliases
+source "/home/altergnu/Projects/Dotfiles/custom_cmds_and_aliases/vim/aliases"		# ADD vim aliases
+source "/home/altergnu/Projects/Dotfiles/custom_cmds_and_aliases/taskw/aliases"		# ADD taskw aliases

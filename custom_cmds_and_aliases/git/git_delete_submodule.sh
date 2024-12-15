@@ -46,6 +46,6 @@ if ! git rev-parse --is-inside-work-tree &>/dev/null;then
     usage "Not in a git repo, ${M0}${PWD}${E} is not a git repo!" 3
 fi
 [[ ! -d ${1} ]] && usage "'${M0}${1}${R0}' is not a valide submodule path." 4
-git submodule deinit ${sub_path} || usage "Can't deinit ${M0}${1}${R0}'." 5
-git rm ${sub_path} || usage "Can't rm ${M0}${1}${R0}'." 6
+git submodule deinit -f ${1} || usage "Can't deinit ${M0}${1}${R0}'." 5
+git rm ${1} || usage "Can't rm ${M0}${1}${R0}'." 6
 git commit -am "Removed submodule"
