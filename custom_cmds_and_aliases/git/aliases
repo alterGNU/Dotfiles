@@ -3,4 +3,5 @@
 # ============================================================================================================
 
 # =[ CUSTOM COMMAND ]=========================================================================================
-#alias tga='tw_get_task_attribut'        # Task Get Attribut
+alias gas='git_add_submodule'        # Git Add Submodule
+alias gds='git_delete_submodule'     # Git Delete Submodule
