@@ -1,3 +1,6 @@
 [submodule "Vim"]
 	path = Vim
 	url = https://github.com/alterGNU/Vim.git
+[submodule "WikiLinkConvertor"]
+	path = WikiLinkConvertor
+	url = https://github.com/alterGNU/WikiLinkConvertor.git
