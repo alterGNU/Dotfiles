@@ -168,7 +168,7 @@ install_cmd()
     if command_exists "${cmd_name}";then
         echol "${G}${pck_name}${E} already installed." "3"
     else
-        exec_anim "yes | sudo apt install ${pck_name}"
+        exec_anim "sudo apt install ${pck_name}"
         echol "${G}${pck_name}${E} installed successfully." "3"
     fi
 }
