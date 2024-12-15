@@ -20,17 +20,19 @@
 #   - [ ] Usemode with git-clone (no git clone needed)
 #   - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
 #   - [ ] Add interactive argument (ask user before each step if install needed/wanted)
+#   - [ ] Add uninstall that also remove CUSTOM_CMD_BIN_FOLDER (solve link, if dead, rm sym-link)
 # ============================================================================================================
  
 # ============================================================================================================
 # VAR
 # ============================================================================================================
-# Commands needed
-PRE_REQUIS_CMDS=( "curl" )
+# Commands needed key=cmd_name value=package to install
+# coreutils = tee, date, direname, realpath
+declare -A PRE_REQUIS_CMDS=( ["curl"]="curl" ["tee"]="coreutils" ["xsel"]="xsel" ["find"]="findutils")
 # Bin Folder to add to PATH ENV-VAR.
-BINPATH="${HOME}/.local/bin"
+CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"
 # =[ PATH ]===================================================================================================
-LEN=110                                          # Textwidth
+LEN=155                                          # Textwidth
 BCK="${HOME}/backups"                            # Path of the backup folder
 FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"         # Name of the backup folder
 DOTPATH=$(dirname $(realpath ${0}))              # Path of the Dotfile folder
@@ -177,17 +179,55 @@ install_pck()
         exec_anim "pkexec dpkg -i ${1}.deb && echol '${G}${1}.deb${E} installed successfully' || echol '${R}Can not install ${M}${1}${R} package. Something want wrong${E}'"
     fi
 }
+# =[ CUSTOM COMMANDS FUNCTIONS ]==============================================================================
+# -[ CLEAN_CUSTOM_CMD_BIN_FOLDER ]----------------------------------------------------------------------------
+# if exist, check all its link, if dead, rm them
+clean_custom_cmd_bin_folder()
+{
+    if [[ -d ${CUSTOM_CMD_BIN_FOLDER} ]];then
+        for symlink in "${CUSTOM_CMD_BIN_FOLDER}"/*;do
+            if [ -L "${symlink}" ] && [ ! -e ${symlink} ];then
+                rm "${symlink}" && echol "Removing dead symlink: '${symlink}'"
+            fi
+        done
+    fi
+}
 # -[ ADD_CUSTOM_CMD() ]---------------------------------------------------------------------------------------
-# Add custom command located at $arg1 named $arg2
+# Add custom command located at $arg1 named $arg2 
+# Exemple: add_custom_cmd "${DOTPATH}/cmds/taskw/get_task_done_by_date.sh" "gtdbd"
 add_custom_cmd()
 {
+    # Check if bin_folder exists, else create it.
+    if [[ ! -d "${CUSTOM_CMD_BIN_FOLDER}" ]];then
+        mkdir -p "${CUSTOM_CMD_BIN_FOLDER}"
+        echol "folder ${CUSTOM_CMD_BIN_FOLDER} created."
+    fi
+    # Check if bin_folder in var-env path, else add it.
+    if [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]];then
+        export PATH="$PATH:${CUSTOM_CMD_BIN_FOLDER}"
+        echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH."
+    fi
     local filepath=${1}
     local cmd_name=${2}
     if command_exists "${cmd_name}";then
         echol "${U}Custom command:${E} ${G}${cmd_name}${E} is already install."
     else
-        [[ ! -d "${BINPATH}" ]] && mkdir -p "${BINPATH}"
-        create_symlink ${filepath} ${BINPATH}/${cmd_name}
+        create_symlink ${filepath} ${CUSTOM_CMD_BIN_FOLDER}/${cmd_name}
+    fi
+}
+# -[ ADD_ALL_CUSTOM_CMD ]-------------------------------------------------------------------------------------
+# Add all scripts found in folder as a custom command
+# Exemple: add_all_cmds_and_aliases_in "${DOTPATH}/cmds/taskw/"
+add_all_cmds_and_aliases_in()
+{
+    [[ ${#} -ne 1 ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, this function take one argument:${M}<path_to_folder>${R} and ${#} arg given${E}" && exit 4 ; }
+    [[ ! -d ${1} ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, arg:${M}<${1}>${R}is not a folder${E}" && exit 5 ; }
+    clean_custom_cmd_bin_folder ${CUSTOM_CMD_BIN_FOLDER}
+    for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
+    if [[ -f "${1}/aliases" ]];then
+        local dir_name=${1##*\/}
+        echo -e "source \"${1}/aliases\"\t\t# ADD ${dir_name} aliases" >> "${DOTPATH}/zshrc"
+        source "${DOTPATH}/zshrc"
     fi
 }
 # =[ CONFIG-FCTS ]============================================================================================
@@ -195,10 +235,10 @@ add_custom_cmd()
 # check all needed tools, if not installed, install them
 install_pre_requis_cmds()
 {
-    print_title "${B}Install required tools.${E}"
+    print_title "${B}Required tools.${E}"
     # Install apt if not already here
     install_pck "apt"
-    for pkg in ${PRE_REQUIS_CMDS[@]};do exec_anim "install_cmd ${pkg}" ; done
+    for cmd in "${!PRE_REQUIS_CMDS[@]}";do exec_anim "install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}" ; done
     print_last
 }
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
@@ -241,7 +281,8 @@ config_git()
     # Make save old dotfiles + Create symlink to gitconfig file
     save_file "${HOME}/.gitconfig"
     create_symlink ${DOTPATH}/gitconfig ${HOME}/.gitconfig
-    # TODO All custom git command
+    # Install custom command
+    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/git"
     print_last
 }
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
@@ -264,6 +305,8 @@ config_vim()
     create_symlink ${DOTPATH}/vim ${HOME}/.vim
     create_symlink ${DOTPATH}/vim/vimrc ${HOME}/.vimrc
     exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" &&  echol "Vim plugins installed."
+    # Install custom command
+    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/vim"
     print_last
 }
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
@@ -281,14 +324,14 @@ config_taskw()
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
     # Install custom command
-    add_custom_cmd "${DOTPATH}/cmds/taskw/get_task_done_by_date.sh" "get_task_done_by_date"
+    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/taskw"
     print_last
 }
 # -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
 install_other_custom_cmd()
 {
     print_title "${B}Other Custom Commands:${E}"
-    add_custom_cmd "${DOTPATH}/cmds/WLC/wlc.sh" "wlc"
+    add_all_cmds_and_aliases_in "${DOTPATH}/cmds/WLC"
     print_last
 }
 # ============================================================================================================

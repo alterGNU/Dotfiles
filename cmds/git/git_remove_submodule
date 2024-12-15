@@ -1,8 +1,0 @@
-# -[ GIT_REMOVE_SUBMODULE ]-----------------------------------------------------------------------------------
-git_remove_submodule()
-{
-    local sub_path=${1}
-    git submodule deinit ${sub_path}
-    git rm ${sub_path}
-    git commit -am "Removed submodule ${sub_path}"
-}

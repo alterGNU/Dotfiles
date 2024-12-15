@@ -5,6 +5,9 @@
 #   - ./get_task_done_by_date.sh 
 #   - vimwiki wiki syntax : [...](<pageName>)
 #
+# - Requirements:
+#   - taskwarrior package for task command
+#   - coreutils package for date command
 #
 # ============================================================================================================
  
