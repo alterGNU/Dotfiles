@@ -28,7 +28,7 @@
 # ============================================================================================================
 # Commands needed key=cmd_name value=package to install
 # coreutils = tee, date, direname, realpath
-declare -A PRE_REQUIS_CMDS=( ["curl"]="curl" ["tee"]="coreutils" ["xsel"]="xsel" ["find"]="findutils" ["grep"]="grep" )
+declare -A PRE_REQUIS_CMDS=( ["curl"]="curl" ["tee"]="coreutils" ["xsel"]="xsel" ["find"]="findutils" ["grep"]="grep" ["sed"]="sed" )
 # Bin Folder to add to PATH ENV-VAR.
 CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"
 # =[ PATH ]===================================================================================================
@@ -42,6 +42,7 @@ G="\033[1;32m"                                   # START GREEN
 M="\033[1;33m"                                   # START BROWN
 U="\033[4;29m"                                   # START UNDERSCORED
 B="\033[1;36m"                                   # START BLUE
+Y="\033[0;93m"                                   # START YELLOW
 # Commands needed
 BB="\033[1;96m"                                  # START BLUE
 E="\033[0m"                                      # END color balise
@@ -67,18 +68,23 @@ pnt() { for i in $(seq 0 $((${2})));do echo -en ${1};done ; }
 # -[ PRINT_TITLE ]--------------------------------------------------------------------------------------------
 print_title()
 {
-    local size=$(get_len "${1}")
+    local titre="${Y}${1}${E}"
+    local size=$(get_len "${titre}")
     echo -en "${TLC}" && pnt ${H} $(( size + 1 )) && echo -en "${TRC}\n"
-    echo -en "${V} ${1} ${VS}" && pnt "${H}" $((LEN - $(get_len "${1}") - 5 )) && echo -en "${TRC}\n"
+    echo -en "${V} ${titre} ${VS}" && pnt "${H}" $((LEN - $(get_len "${titre}") - 5 )) && echo -en "${TRC}\n"
     echo -en "${VS}" && pnt ${H} $(( size + 1 )) && echo -en "${BRC}"
-    pnt "\x20" $((LEN - $(get_len "${1}") - 5 )) && echo -en "${V}\n"
+    pnt "\x20" $((LEN - $(get_len "${titre}") - 5 )) && echo -en "${V}\n"
 }
 print_last() { echo -en "${BLC}" && pnt ${H} $(( LEN - 2 )) && echo -en "${BRC}\n" ; }
 # -[ ECHO LINE ]----------------------------------------------------------------------------------------------
-# echo line
+# echo line inside the box (arg2 optionnal=indentation)
 echol()
 {
-    local line="${V} ${B}‣${E} ${1}"
+    local sym=( "${Y}✦${E}" "${Y}➣${E}" "${Y}➣${E}"  "${Y}⤷${E}" "${Y}⤷${E}" "${Y}⤷${E}" "${Y}⤷${E}" )
+    [[ ${#} -eq 1 ]] && local indent=1 || local indent=${2}
+    local sym=${sym[$(((${indent} % ${#sym[@]})-1))]}
+    local spaces=$(printf ' %.s' $(seq 1 ${indent}))
+    local line="${V}${spaces}${B}${sym}${E} ${1}"
     local size=$(get_len "${line}")
     echo -en "${line}"
     pnt "\x20" $(( LEN - size - 1 ))
@@ -110,7 +116,7 @@ del_symlink()
     if [[ -h "${1}" ]];then
         local solved_link=$(readlink -f "${1}")
         rm "${1}"
-        echol "${U}rm sym-link${E}: '${BB}${1}${E}' ➟  '${M}${solved_link}${E}'"
+        echol "${U}rm sym-link${E}: '${BB}${1}${E}' ➟  '${M}${solved_link}${E}'" "3"
     fi
 }
 # -[ CREATE_BCKUP_FOLDER() ]----------------------------------------------------------------------------------
@@ -122,9 +128,9 @@ create_symlink()
 {
     ln -s ${1} ${2} 
     if [[ ${?} -eq 0 ]];then
-        echol "${U}Create sym-link${E}: '${BB}${2}${E}' ➟ '${M}${1}${E}'"
+        echol "${U}Create sym-link${E}: '${BB}${2}${E}' ➟ '${M}${1}${E}'" "3"
     else
-        echol "${R}Something went wrong while creating sym-link: '${BB}${2}${R}' ➟ '${M}${1}${E}'"
+        echol "${R}Something went wrong while creating sym-link: '${BB}${2}${R}' ➟ '${M}${1}${E}'" "3"
         return 3;
     fi
 }
@@ -136,7 +142,7 @@ save_file()
     if [[ -f "${1}" ]];then
         create_bckup_folder
         [[ -n "${2}" ]] && local dst_filename="${2}" || local dst_filename=$(basename "${1}")
-        mv "${1}" "${FLD}/${dst_filename}" && echol "${U}Create backup-file${E}: '${FLD}/${dst_filename}'"
+        mv "${1}" "${FLD}/${dst_filename}" && echol "${U}Create backup-file${E}: '${FLD}/${dst_filename}'" "3"
     fi
 }
 # -[ SAVE_FOLDER ]--------------------------------------------------------------------------------------------
@@ -147,7 +153,7 @@ save_folder()
     if [[ -f "${1}" ]];then
         create_bckup_folder
         [[ -n "${2}" ]] && local dst_foldername="${2}" || local dst_foldername=$(basename "${1}")
-        mv "${1}" "${FLD}/${dst_foldername}" && echol "${U}Create backup-folder${E}:'${FLD}/${dst_foldername}'"
+        mv "${1}" "${FLD}/${dst_foldername}" && echol "${U}Create backup-folder${E}:'${FLD}/${dst_foldername}'" "3"
     fi
 }
 # -[ COMMAND_EXISTS ]-----------------------------------------------------------------------------------------
@@ -160,10 +166,10 @@ install_cmd()
     local cmd_name=${1}
     [[ -z ${2} ]] && local pck_name=${1} || local pck_name=${2}
     if command_exists "${cmd_name}";then
-        echol "${G}${pck_name}${E} already installed."
+        echol "${G}${pck_name}${E} already installed." "3"
     else
         exec_anim "yes | sudo apt install ${pck_name}"
-        echol "${G}${pck_name}${E} installed successfully."
+        echol "${G}${pck_name}${E} installed successfully." "3"
     fi
 }
 # -[ PACKAGE_INSTALLED ]--------------------------------------------------------------------------------------
@@ -174,9 +180,9 @@ pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "inst
 install_pck()
 {
     if pck_installed "${1}";then
-        echol "${G}${1}${E} package already installed."
+        echol "${G}${1}${E} package already installed." "3"
     else
-        exec_anim "pkexec dpkg -i ${1}.deb && echol '${G}${1}.deb${E} installed successfully' || echol '${R}Can not install ${M}${1}${R} package. Something want wrong${E}'"
+        exec_anim "pkexec dpkg -i ${1}.deb && echol '${G}${1}.deb${E} installed successfully' '3' || echol '${R}Can not install ${M}${1}${R} package. Something want wrong${E}' '3'"
     fi
 }
 # =[ CUSTOM COMMANDS FUNCTIONS ]==============================================================================
@@ -200,7 +206,7 @@ add_custom_cmd()
     local filepath=${1}
     local cmd_name=${2}
     if command_exists "${cmd_name}";then
-        echol "${U}Custom command:${E} ${G}${cmd_name}${E} is already install."
+        echol "${U}Custom command:${E} ${G}${cmd_name}${E} is already install." "3"
     else
         create_symlink ${filepath} ${CUSTOM_CMD_BIN_FOLDER}/${cmd_name}
     fi
@@ -210,28 +216,29 @@ add_custom_cmd()
 # Exemple: add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/taskw/"
 add_all_cmds_and_aliases_in()
 {
-    [[ ${#} -ne 1 ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, this function take one argument:${M}<path_to_folder>${R} and ${#} arg given${E}" && exit 4 ; }
-    [[ ! -d ${1} ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, arg:${M}<${1}>${R}is not a folder${E}" && exit 5 ; }
+    [[ ${#} -ne 1 ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, this function take one argument:${M}<path_to_folder>${R} and ${#} arg given${E}" "3" && exit 4 ; }
+    [[ ! -d ${1} ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, arg:${M}<${1}>${R}is not a folder${E}" "3" && exit 5 ; }
     # Check if bin_folder exists, else create it.
     if [[ ! -d "${CUSTOM_CMD_BIN_FOLDER}" ]];then
         mkdir -p "${CUSTOM_CMD_BIN_FOLDER}"
-        echol "folder ${CUSTOM_CMD_BIN_FOLDER} created."
+        echol "folder ${CUSTOM_CMD_BIN_FOLDER} created." "3"
     fi
     # Check if bin_folder in var-env path, else add it.
     if [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]];then
         export PATH="$PATH:${CUSTOM_CMD_BIN_FOLDER}"
-        echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH."
+        echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH." "3"
     fi
     # Clean bim_folder of broken sym-link
     clean_custom_cmd_bin_folder ${CUSTOM_CMD_BIN_FOLDER}
     for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
     if [[ -f "${1}/aliases" ]];then
         local dir_name=${1##*\/}
-        local line_to_add="source \"${1}/aliases\"\t\t# ADD ${dir_name} aliases"
-        if grep -Fxq "${line_to_add}" "${DOTPATH}/zshrc";then
-            echol "${dir_name}/aliases already in zshrc file."
+        local file_to_source="${1}/aliases"
+        local line_to_add="source \"${file_to_source}\" # ADD ${dir_name} aliases"
+        if grep -Eq "^source .+${1}.*$" "${DOTPATH}/zshrc";then
+            echol "${DOTPATH}/${dir_name}/aliases already sourced in zshrc file." "3"
         else
-            echol "${dir_name}/aliases add successfully to zshrc file."
+            echol "${DOTPATH}/${dir_name}/aliases add successfully to zshrc file." "3"
             echo -e "${line_to_add}" >> "${DOTPATH}/zshrc"
         fi
     fi
@@ -241,8 +248,8 @@ add_all_cmds_and_aliases_in()
 # check all needed tools, if not installed, install them
 install_pre_requis_cmds()
 {
-    print_title "${B}Required tools.${E}"
-    # Install apt if not already here
+    print_title "Required tools."
+    echol "${Y}Check all commands/packages needed${E}:"
     install_pck "apt"
     for cmd in "${!PRE_REQUIS_CMDS[@]}";do exec_anim "install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}" ; done
     print_last
@@ -250,52 +257,62 @@ install_pre_requis_cmds()
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
 config_zsh()
 {
-    print_title "${B}ZSH config.${E}"
-    # install zsh if not already installed
+    print_title "ZSH config."
+
+    echol "${Y}Install commands/packages needed${E}:"
     install_cmd "zsh"
-    # set zsh as default shell if not already
+    
+    echol "${Y}Set zsh as default shell${E}:"
     if [[ "${SHELL}" != "$(which zsh)" ]];then
-        chsh -s $(which zsh) && echol "Zsh successfully set as default shell" || { echol "${R}Something went wrong will setting Zsh as default shell" && exit 3 ; }
+        chsh -s $(which zsh) && echol "Zsh successfully set as default shell" "3" || { echol "${R}Something went wrong will setting Zsh as default shell" "3" && exit 3 ; }
     else
-        echol "Zsh already set as default shell."
+        echol "Zsh already set as default shell." "3"
     fi
-    # check if oh-my-zsh is installed, else install it
+
+    echol "${Y}Install Oh-my-zsh:${E}"
     if [ -d "$HOME/.oh-my-zsh" ]; then
-        echol "${B}Oh-My-Zsh${E} was already installed."
+        echol "${B}Oh-My-Zsh${E} was already installed." "3"
     else
         exec_anim 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended'
-        [[ ${?} -eq 0 ]] && echol "${E}Oh-My-Zsh${E} installed." || echol "${R}Something went wrong will downloading Oh-My-Zsh.${E}"
+        [[ ${?} -eq 0 ]] && echol "${E}Oh-My-Zsh${E} installed." "3" || echol "${R}Something went wrong will downloading Oh-My-Zsh.${E}" "3"
     fi
-    # Set zsh the default shell
-    if [ "${SHELL}" != "$(which zsh)" ]; then
-        exec $(which zsh)
-    else
-        echol "Already on zsh."
-    fi
+    ## Set zsh the default shell
+    #if [ "${SHELL}" != "$(which zsh)" ]; then
+    #    exec $(which zsh)
+    #else
+    #    echol "Already on zsh." "3"
+    #fi
     # Add real $DOTPATH value in zshrc + save old dotfiles + create link
-    sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" ${DOTPATH}/zshrc
+
+    echol "${Y}Save&Remove old config.:${E}"
     save_file "${HOME}/.zshrc"
+
+    echol "${Y}Set new config.:${E}"
+    sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" ${DOTPATH}/zshrc
     create_symlink "${DOTPATH}/zshrc" "${HOME}/.zshrc"
     print_last
 }
 # -[ CONFIG_GIT ]---------------------------------------------------------------------------------------------
 config_git()
 {
-    print_title "${B}GIT config.${E}"
-    # check if git is installed, else install it
+    print_title "GIT config."
+    echol "${Y}Install commands/packages needed${E}:"
     exec_anim "install_cmd git"
-    # Make save old dotfiles + Create symlink to gitconfig file
+
+    echol "${Y}Save&Remove old config.:${E}"
     save_file "${HOME}/.gitconfig"
+
+    echol "${Y}Set new config.:${E}"
     create_symlink ${DOTPATH}/gitconfig ${HOME}/.gitconfig
-    # Install custom command
     add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/git"
     print_last
 }
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
 config_vim()
 {
-    print_title "${B}VIM config.${E}"
-    # check if vim is installed, else install it
+    print_title "VIM config."
+
+    echol "${Y}Install commands/packages needed${E}:"
     exec_anim "install_cmd vim"
     exec_anim "install_cmd cscope"
     # Check if vim is +clipboard compatible, else install vim-gtk3
@@ -304,22 +321,24 @@ config_vim()
     else
         exec_anim "install_cmd vim-gtk3"
     fi
-    # Save old dotfiles + create synlinks to ~/.vim/ and ~/.vimrc then install vim plugin
+
+    echol "${Y}Save&Remove old config.:${E}"
     save_folder "${HOME}/.vim" "vim_from_home"
     save_file "${HOME}/.vimrc" "vimrc_from_home"
     save_folder "${HOME}/.config/vim" "vim_from_config"
+
+    echol "${Y}Set new config.:${E}"
     create_symlink ${DOTPATH}/vim ${HOME}/.vim
     create_symlink ${DOTPATH}/vim/vimrc ${HOME}/.vimrc
     exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" &&  echol "Vim plugins installed."
-    # Install custom command
     add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/vim"
     print_last
 }
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
 config_taskw()
 {
-    print_title "${B}TASKWARRIOR config.${E}"
-    # Check if task and time warrior are installed, else install them
+    print_title "TASKWARRIOR config."
+    # install pre-requis
     exec_anim "install_cmd task taskwarrior"
     exec_anim "install_cmd timew timewarrior"
     # TODO add taskserveur (client & serveur)
@@ -336,8 +355,8 @@ config_taskw()
 # -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
 install_other_custom_cmd()
 {
-    print_title "${B}Other Custom Commands:${E}"
-    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/WLC"
+    print_title "Other Custom Commands:"
+    #add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/WLC"
     print_last
 }
 # ============================================================================================================
