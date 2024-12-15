@@ -1,6 +1,3 @@
 [submodule "vim"]
 	path = vim
 	url = https://github.com/alterGNU/Vim.git
-[submodule "custom_cmds_and_aliases/wlc"]
-	path = custom_cmds_and_aliases/wlc
-	url = https://github.com/alterGNU/WikiLinkConvertor.git
