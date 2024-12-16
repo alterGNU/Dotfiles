@@ -38,7 +38,7 @@ bindkey \^U backward-kill-line # Make zsh Ctrl_u behave like bash to delete all 
 # -[ OH-MY-ZSH ]----------------------------------------------------------------------------------------------
 source ${ZSH}/oh-my-zsh.sh
 # -[ ALIASES ]------------------------------------------------------------------------------------------------
-source ~/.aliases/*
+for file in "${HOME}/.aliases/"*;do source ${file};done
 
 # =[ ALIAS ]==================================================================================================
 alias francinette=/home/altergnu/francinette/tester.sh
