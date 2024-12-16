@@ -27,38 +27,103 @@
 # VAR
 # ============================================================================================================
 # Commands needed key=cmd_name value=package to install
-# coreutils = tee, date, direname, realpath
-declare -A PRE_REQUIS_CMDS=( ["curl"]="curl" ["tee"]="coreutils" ["xsel"]="xsel" ["find"]="findutils" ["grep"]="grep" ["sed"]="sed" )
-# Bin Folder to add to PATH ENV-VAR.
-CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"
+# coreutils = tee, date, direname, realpath , ...
+declare -A PRE_REQUIS_CMDS=( \
+    ["curl"]="curl" \
+    ["find"]="findutils" \
+    ["grep"]="grep" \
+    ["sed"]="sed" \
+    ["tee"]="coreutils" \
+    ["usermod"]="passwd" \
+    ["which"]="which" \
+    ["xsel"]="xsel" \
+)
 # =[ PATH ]===================================================================================================
-LEN=110                                          # Textwidth
-BCK="${HOME}/backups"                            # Path of the backup folder
-FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"         # Name of the backup folder
-DOTPATH=$(dirname $(realpath ${0}))              # Path of the Dotfile folder
+LEN=110                                                  # Textwidth
+BCK="${HOME}/backups"                                    # Path of the backup folder
+FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"                 # Name of the backup folder
+DOTPATH=$(dirname $(realpath ${0}))                      # Path of the Dotfile folder
+# =[ FOLDERS ]================================================================================================
+CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"               # Folder where bin/custom cmd link are store (add to PATH ENV-VAR.)
+ACTIVE_ALIASES_FOLDER="${DOTPATH}/active_custom_aliases" # Folder where actives aliases files are store (source in zshrc)
 # =[ COLORS ]=================================================================================================
-R="\033[1;31m"                                   # START RED
-G="\033[1;32m"                                   # START GREEN
-M="\033[1;33m"                                   # START BROWN
-U="\033[4;29m"                                   # START UNDERSCORED
-B="\033[1;36m"                                   # START BLUE
-Y="\033[0;93m"                                   # START YELLOW
+R="\033[1;31m"                                           # START RED
+G="\033[1;32m"                                           # START GREEN
+M="\033[1;33m"                                           # START BROWN
+U="\033[4;29m"                                           # START UNDERSCORED
+B="\033[1;36m"                                           # START BLUE
+Y="\033[0;93m"                                           # START YELLOW
 # Commands needed
-BB="\033[1;96m"                                  # START BLUE
-E="\033[0m"                                      # END color balise
+BB="\033[1;96m"                                          # START BLUE
+E="\033[0m"                                              # END color balise
 # =[ BOX ]====================================================================================================
-  H="═"                                          # Horizontal
-  V="║"                                          # Vertical
- VS="╠"                                          # Vertical Split
-TLC="╔"                                          # Top Left Corner
-TRC="╗"                                          # Top Right Corner
-BLC="╚"                                          # Bottom Left Corner
-BRC="╝"                                          # Bottom Right Corner
+  H="═"                                                  # Horizontal
+  V="║"                                                  # Vertical
+ VS="╠"                                                  # Vertical Split
+TLC="╔"                                                  # Top Left Corner
+TRC="╗"                                                  # Top Right Corner
+BLC="╚"                                                  # Bottom Left Corner
+BRC="╝"                                                  # Bottom Right Corner
 
 # ============================================================================================================
 # FUNCTIONS
 # ============================================================================================================
-# =[ UTILS FCTS ]=============================================================================================
+# =[ UTILS SYM-LINK FCTS ]====================================================================================
+# -[ SHORT_PATH ]---------------------------------------------------------------------------------------------
+# Replace long path by Variable name /home/user/toto/titi -> ${HOME}/toto/titi
+short_path()
+{
+    local short=${1/${DOTPATH}/\$\{DOTPATH\}}
+    local short=${short/${HOME}/\$\{HOME\}}
+    echo ${short}
+}
+# -[ IS_A_VALID_SYMLINK ]-------------------------------------------------------------------------------------
+# Check if the arg1 is a valid symbolic link
+is_a_valid_symlink(){ [ -L "${1}" ] && [ -e "$(readlink -f "${1}")" ] ; }
+# -[ DEL_SYMLINK ]--------------------------------------------------------------------------------------------
+# If arg1 is a path to a synbolic link, delete it
+del_symlink()
+{ 
+    if [[ -h "${1}" ]];then
+        local solved_link=$(readlink -f "${1}")
+        rm "${1}"
+        echol "${U}rm sym-link${E}: '${BB}$(short_path ${1})${E}' ➟  '${M}$(short_path ${solved_link})${E}'" "3"
+    fi
+}
+# -[ CREATE SYM-LINK ]----------------------------------------------------------------------------------------
+# create a sym-link from arg1 to arg2 (if arg2 already exists, do nothing)
+create_symlink()
+{
+    if [[ -L "${2}" ]];then
+        local old_link=$(readlink -f "${1}")
+        if [[ "${old_link}" == "${1}" ]];then
+            echol "${U}Link already exist${E}: '${BB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3"
+        else
+            echol "${U}Link already exist${E}: '${BB}$(short_path ${2})${E}' ${R}↛${E} '${M}$(short_path ${1})${E}'" "3"
+            echol "                                            ${G}⮡${E} '${M}${old_link}${E}'" "3"
+        fi
+    else
+        ln -s "${1}" "${2}" && echol "${U}Create sym-link${E}: '${BB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3" || { echol "${R}FAILED to create sym-link: '${BB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "3" && exit 3 ; }
+        if ! is_a_valid_symlink "${2}";then
+            echol "${R}Sym-link created not valid:'${BB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "5"
+            rm "${2}" && echol "${R}Sym-link '${BB}$(short_path ${2})${R}' REMOVED!" "5"
+            return 3;
+        fi
+    fi
+}
+# -[ RM_BROKEN_LINK_FROM_FOLDER ]-----------------------------------------------------------------------------
+# if exist, check all its link, if dead, rm them
+rm_broken_link_from_folder()
+{
+    if [[ -d ${1} ]];then
+        for symlink in "${1}"/*;do if ! is_a_valid_symlink "${symlink}";then del_symlink ${symlink};fi done
+    else
+        local short1=${1/${DOTPATH}/\$\{DOTPATH\}}
+        local short1=${short1/${HOME}/\$\{HOME\}}
+        echo "${R}Wrong usage of ${B}rm_broken_link_from_folder${R}: ${M}${1}${R} is not a folder${E}"
+    fi
+}
+# =[ UTILS PRINT AND DISPLAY TEXT FCTS ]======================================================================
 # -[ GET_LEN ]------------------------------------------------------------------------------------------------
 # return real len
 get_len() { echo $(echo -en "${1}" | sed 's/\x1b\[[0-9;]*m//g' | wc -m) ; }
@@ -77,7 +142,7 @@ print_title()
 }
 print_last() { echo -en "${BLC}" && pnt ${H} $(( LEN - 2 )) && echo -en "${BRC}\n" ; }
 # -[ ECHO LINE ]----------------------------------------------------------------------------------------------
-# echo line inside the box (arg2 optionnal=indentation)
+# echo line inside the box (arg2 optionnal=indentation with custom. list items symb.)
 echol()
 {
     local sym=( "${Y}✦${E}" "${Y}➣${E}" "${Y}➣${E}"  "${Y}⤷${E}" "${Y}⤷${E}" "${Y}⤷${E}" "${Y}⤷${E}" )
@@ -90,6 +155,59 @@ echol()
     pnt "\x20" $(( LEN - size - 1 ))
     [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${V}\n" || echo -en "\n"
 }
+# =[ UTILS MANIP. FILES AND FOLDERS FCTS ]====================================================================
+# -[ INSERT_LINE_IN_FILE_UNDER_MATCH ]------------------------------------------------------------------------
+# If not already there, insert <line>(arg1) in <file>(arg2) under the <matching_line>(arg3:opt):
+#   - If arg3:opt given and found : insert <line> under <matching_line> in <file>
+#   - else (arg3 given but not found OR not given) : insert <line> at the end of <file>
+insert_line_in_file_under_match()
+{
+    local fun_name="insert_line_in_file_under_match"
+    [[ ( ${#} -lt 2 ) || ( ${#} -gt 3 ) ]] && { echo -e "${R}Wrong Usage of ${G}${fun_name}${R}, take 2 or 3 args, ${#} were given" && exit 1 ; }
+    [[ ! -f ${2} ]] && { echo -e "${R}Wrong Usage of ${G}${fun_name}${R}, arg2:'${M}${2}${R}' is not a file" && exit 1 ; }
+    if grep -x -q "${1}" "${2}";then
+        echol "line:'${G}$(short_path ${1})${E}' was already in file:'${M}$(short_path ${2})${E}'." "3"
+    else
+        if [[ -n ${3} ]] && grep -q "${3}" "${2}";then
+            sed -i "/${3}/a\\${1}" "${2}" && echol "line '${B}$(short_path ${1})${E}' insert successfully in file=${M}$(short_path ${2})${E}" "3"
+        else
+            echo "${1}" >> "${2}" && echol "line '${B}$(short_path ${1})${E}' append successfully to EOF of ${M}$(short_path ${2})${E}" "3"
+        fi
+    fi
+}
+# -[ MKDIR_IF_NOT_EXIST() ]-----------------------------------------------------------------------------------
+# create a directory if not already created
+mkdir_if_not_exist()
+{ 
+    if [[ ! -d "${1}" ]];then
+        mkdir -p "${1}" && echol "${U}Mkdir:${E}'${B}$(short_path ${1})${E}', directory successfully created." "3" || echol "${R}FAILED to create '${M}$(short_path ${1})${E}' directory" "3"
+    else
+        echol "${U}No mkdir of:${E}'${B}$(short_path ${1})${E}', directory was already created." "3"
+    fi
+}
+# -[ SAVE_FILE ]----------------------------------------------------------------------------------------------
+# If arg1 is a path to a file, make a backup. The backup name can be manually provide by arg2 (opt)
+save_file()
+{
+    del_symlink "${1}"
+    if [[ -f "${1}" ]];then
+        [[ -n "${2}" ]] && local dst_filename="${2}" || local dst_filename=$(basename "${1}")
+        mkdir_if_not_exist "${FLD}/${dst_filename}"
+        mv "${1}" "${FLD}/${dst_filename}" && echol "${U}Create backup-file${E}: '${FLD}/${dst_filename}'" "3"
+    fi
+}
+# -[ SAVE_FOLDER ]--------------------------------------------------------------------------------------------
+# If arg1 is a path to a folder, make a backup. The backup name can be manually provide by arg2 (opt)
+save_folder()
+{
+    del_symlink "${1}"
+    if [[ -f "${1}" ]];then
+        [[ -n "${2}" ]] && local dst_foldername="${2}" || local dst_foldername=$(basename "${1}")
+        mkdir_if_not_exist "${FLD}/${dst_filename}"
+        mv "${1}" "${FLD}/${dst_foldername}" && echol "${U}Create backup-folder${E}:'${FLD}/${dst_foldername}'" "3"
+    fi
+}
+# =[ CMDS UTILES FCTS ]=======================================================================================
 # -[ EXEC_ANIM() ]--------------------------------------------------------------------------------------------
 # print animation in frontground while cmd exec in background the print returns.
 exec_anim()
@@ -109,53 +227,6 @@ exec_anim()
     printf "\r" && cat "${tmpfile}"
     return ${exit_code}
 }
-# -[ DEL_SYMLINK ]--------------------------------------------------------------------------------------------
-# If arg1 is a path to a synbolic link, delete it
-del_symlink()
-{ 
-    if [[ -h "${1}" ]];then
-        local solved_link=$(readlink -f "${1}")
-        rm "${1}"
-        echol "${U}rm sym-link${E}: '${BB}${1}${E}' ➟  '${M}${solved_link}${E}'" "3"
-    fi
-}
-# -[ CREATE_BCKUP_FOLDER() ]----------------------------------------------------------------------------------
-# create a backup folder if not already created
-create_bckup_folder() { [[ ! -d ${FLD}/${1} ]] && mkdir -p ${FLD}/${1} ; }
-# -[ CREATE SYN-LINK ]----------------------------------------------------------------------------------------
-# create a sym-link from arg1 to arg2
-create_symlink()
-{
-    ln -s ${1} ${2} 
-    if [[ ${?} -eq 0 ]];then
-        echol "${U}Create sym-link${E}: '${BB}${2}${E}' ➟ '${M}${1}${E}'" "3"
-    else
-        echol "${R}Something went wrong while creating sym-link: '${BB}${2}${R}' ➟ '${M}${1}${E}'" "3"
-        return 3;
-    fi
-}
-# -[ SAVE_FILE ]----------------------------------------------------------------------------------------------
-# If arg1 is a path to a file, make a backup. The backup name can be manually provide by arg2 (opt)
-save_file()
-{
-    del_symlink "${1}"
-    if [[ -f "${1}" ]];then
-        create_bckup_folder
-        [[ -n "${2}" ]] && local dst_filename="${2}" || local dst_filename=$(basename "${1}")
-        mv "${1}" "${FLD}/${dst_filename}" && echol "${U}Create backup-file${E}: '${FLD}/${dst_filename}'" "3"
-    fi
-}
-# -[ SAVE_FOLDER ]--------------------------------------------------------------------------------------------
-# If arg1 is a path to a folder, make a backup. The backup name can be manually provide by arg2 (opt)
-save_folder()
-{
-    del_symlink "${1}"
-    if [[ -f "${1}" ]];then
-        create_bckup_folder
-        [[ -n "${2}" ]] && local dst_foldername="${2}" || local dst_foldername=$(basename "${1}")
-        mv "${1}" "${FLD}/${dst_foldername}" && echol "${U}Create backup-folder${E}:'${FLD}/${dst_foldername}'" "3"
-    fi
-}
 # -[ COMMAND_EXISTS ]-----------------------------------------------------------------------------------------
 # Check if a command is installed
 command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
@@ -166,10 +237,10 @@ install_cmd()
     local cmd_name=${1}
     [[ -z ${2} ]] && local pck_name=${1} || local pck_name=${2}
     if command_exists "${cmd_name}";then
-        echol "${G}${pck_name}${E} already installed." "3"
+        echol "pck ${G}${pck_name}${E} already installed." "3"
     else
         exec_anim "sudo apt install -y ${pck_name}"
-        echol "${G}${pck_name}${E} installed successfully." "3"
+        echol "pck ${G}${pck_name}${E} installed successfully." "3"
     fi
 }
 # -[ PACKAGE_INSTALLED ]--------------------------------------------------------------------------------------
@@ -180,24 +251,12 @@ pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "inst
 install_pck()
 {
     if pck_installed "${1}";then
-        echol "${G}${1}${E} package already installed." "3"
+        echol "pck ${G}${1}${E} package already installed." "3"
     else
-        exec_anim "pkexec dpkg -i ${1}.deb && echol '${G}${1}.deb${E} installed successfully' '3' || echol '${R}Can not install ${M}${1}${R} package. Something want wrong${E}' '3'"
+        exec_anim "pkexec dpkg -i ${1}.deb && echol 'pck ${G}${1}.deb${E} installed successfully' '3' || echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'"
     fi
 }
 # =[ CUSTOM COMMANDS FUNCTIONS ]==============================================================================
-# -[ CLEAN_CUSTOM_CMD_BIN_FOLDER ]----------------------------------------------------------------------------
-# if exist, check all its link, if dead, rm them
-clean_custom_cmd_bin_folder()
-{
-    if [[ -d ${CUSTOM_CMD_BIN_FOLDER} ]];then
-        for symlink in "${CUSTOM_CMD_BIN_FOLDER}"/*;do
-            if [ -L "${symlink}" ] && [ ! -e ${symlink} ];then
-                del_symlink ${symlink}
-            fi
-        done
-    fi
-}
 # -[ ADD_CUSTOM_CMD() ]---------------------------------------------------------------------------------------
 # Add custom command located at $arg1 named $arg2 
 # Exemple: add_custom_cmd "${DOTPATH}/custom_cmds_and_aliases/taskw/get_task_done_by_date.sh" "gtdbd"
@@ -206,46 +265,47 @@ add_custom_cmd()
     local filepath=${1}
     local cmd_name=${2}
     if command_exists "${cmd_name}";then
-        echol "${U}Custom command:${E} ${G}${cmd_name}${E} is already install." "3"
+        echol "${U}Add custom command:${E} ${G}${cmd_name}${E} is already install." "3"
     else
         create_symlink ${filepath} ${CUSTOM_CMD_BIN_FOLDER}/${cmd_name}
     fi
 }
-# -[ ADD_ALL_CUSTOM_CMD ]-------------------------------------------------------------------------------------
-# Add all scripts found in folder as a custom command
-# Exemple: add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/taskw/"
-add_all_cmds_and_aliases_in()
+# -[ SCRIPT_FOUND_AS_CMD ]------------------------------------------------------------------------------------
+# Add all bash scripts found in folder as a custom command (using ${CUSTOM_CMD_BIN_FOLDER})
+#   - Ex: add_all_script_found_as_cmd "${DOTPATH}/custom_cmds_and_aliases/taskw/"
+add_all_script_found_as_cmd()
 {
-    [[ ${#} -ne 1 ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, this function take one argument:${M}<path_to_folder>${R} and ${#} arg given${E}" "3" && exit 4 ; }
-    [[ ! -d ${1} ]] && { echol "${R}WRONG USAGE of add_all_cmds_and_aliases_in, arg:${M}<${1}>${R}is not a folder${E}" "3" && exit 5 ; }
-    # Check if bin_folder exists, else create it.
-    if [[ ! -d "${CUSTOM_CMD_BIN_FOLDER}" ]];then
-        mkdir -p "${CUSTOM_CMD_BIN_FOLDER}"
-        echol "folder ${CUSTOM_CMD_BIN_FOLDER} created." "3"
-    fi
-    # Check if bin_folder in var-env path, else add it.
-    # TODO : add/write in zshrc file!
-    #if [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]];then
-    #    export PATH="$PATH:${CUSTOM_CMD_BIN_FOLDER}" 
-    #    echol "${CUSTOM_CMD_BIN_FOLDER} added to PATH." "3"
-    #fi
-    # Clean bim_folder of broken sym-link
-    clean_custom_cmd_bin_folder ${CUSTOM_CMD_BIN_FOLDER}
-    for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
-    if [[ -f "${1}/aliases" ]];then
-        local dir_name=${1##*\/}
-        local file_to_source="${1}/aliases"
-        local line_to_add="source \"${file_to_source}\" # ADD ${dir_name} aliases"
-        if grep -Eq "^source .+${1}.*$" "${DOTPATH}/zshrc";then
-            echol "${DOTPATH}/${dir_name}/aliases already sourced in zshrc file." "3"
-        else
-            echol "${DOTPATH}/${dir_name}/aliases add successfully to zshrc file." "3"
-            echo -e "${line_to_add}" >> "${DOTPATH}/zshrc"
-        fi
+    [[ ${#} -ne 1 ]] && { echol "${R}WRONG USAGE of add_all_script_found_as_cmd, this function take one argument:${M}<path_to_folder>${R} and ${#} arg given${E}" "3" && exit 4 ; }
+    if [[ -d ${1} ]];then
+        # Check if bin_folder exists, else create it.
+        mkdir_if_not_exist "${CUSTOM_CMD_BIN_FOLDER}"
+        # Clean bin_folder of broken link
+        rm_broken_link_from_folder ${CUSTOM_CMD_BIN_FOLDER}
+        # Check if bin_folder in var-env path, else add it by writting in zshrc file.
+        [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]] && insert_line_in_file_under_match "export PATH=\"\${PATH}:\${CUSTOM_CMD_BIN_FOLDER}\"" "${DOTPATH}/zsh/zshrc" "# -[ PATH ]---------------------------------------------------------------------------------------------------"
+        # Transform script into custom command by creating link inside
+        for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
+    else
+        echol "${U}No custom cmds${E}:'${B}$(short_path ${1})${E}' is not a folder." "3"
     fi
 }
-# =[ CONFIG-FCTS ]============================================================================================
-# -[ install_pre_requis_cmds ]--------------------------------------------------------------------------------------------
+# -[ ADD_ALIASES ]--------------------------------------------------------------------------------------------
+# Add aliases by creating a syn-link of repo's alias files(filename contains "alias") in ${ACTIVE_ALIASES_FOLDER}
+add_aliases()
+{
+    if [[ ! -d "${ACTIVE_ALIASES_FOLDER}" ]];then
+        mkdir_if_not_exist "${ACTIVE_ALIASES_FOLDER}"
+        echo "${ACTIVE_ALIASES_FOLDER##*\/}/" >> .gitignore
+    fi
+    create_symlink "${ACTIVE_ALIASES_FOLDER}" "${HOME}/.aliases"
+    local folder_name=${1##*\/}
+    for file in ${1}/*alias*;do
+        local file_name=$(basename "${file}")
+        create_symlink "${file}" "${ACTIVE_ALIASES_FOLDER}/${folder_name}_${file_name}"
+    done
+}
+# =[ INSTALL MODULES FUNCTIONS ]==============================================================================
+# -[ INSTALL_PRE_REQUIS_CMDS ]--------------------------------------------------------------------------------
 # check all needed tools, if not installed, install them
 install_pre_requis_cmds()
 {
@@ -259,38 +319,32 @@ install_pre_requis_cmds()
 config_zsh()
 {
     print_title "ZSH config."
-
-    echol "${Y}Install commands/packages needed${E}:"
+    echol "${Y}Install&Set zsh${E}:"
     install_cmd "zsh"
-    
-    echol "${Y}Set zsh as default shell${E}:"
-    if [[ "${SHELL}" != "$(which zsh)" ]];then
-        chsh -s $(which zsh) && echol "Zsh successfully set as default shell" "3" || { echol "${R}Something went wrong will setting Zsh as default shell" "3" && exit 3 ; }
+    local which_zsh=$(which zsh)
+    [[ -z "${which_zsh}" ]] && { echol "FAILED to install zsh" && exit 4 ; }
+    if [[ "${SHELL}" != "${which_zsh}" ]];then
+        sudo usermod -s ${which_zsh} && echol "${G}zsh${E} successfully set as default shell" "3" || { echol "${R}FAILED to set ${B}zsh${R} as default shell" "3" && exit 3 ; }
     else
-        echol "Zsh already set as default shell." "3"
+        echol "${G}zsh${E} already set as default shell." "3"
     fi
-
+    
     echol "${Y}Install Oh-my-zsh:${E}"
-    if [ -d "$HOME/.oh-my-zsh" ]; then
+    if [ -d "${HOME}/.oh-my-zsh" ]; then
         echol "${B}Oh-My-Zsh${E} was already installed." "3"
     else
         exec_anim 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended'
-        [[ ${?} -eq 0 ]] && echol "${E}Oh-My-Zsh${E} installed." "3" || echol "${R}Something went wrong will downloading Oh-My-Zsh.${E}" "3"
+        [[ -d ~/.oh-my-zsh ]] && echol "${E}Oh-My-Zsh${E} successfully installed." "3" || echol "${R}FAILED to install ${B}Oh-My-Zsh${R}.${E}" "3"
     fi
-    ## Set zsh the default shell
-    #if [ "${SHELL}" != "$(which zsh)" ]; then
-    #    exec $(which zsh)
-    #else
-    #    echol "Already on zsh." "3"
-    #fi
-    # Add real $DOTPATH value in zshrc + save old dotfiles + create link
 
     echol "${Y}Save&Remove old config.:${E}"
     save_file "${HOME}/.zshrc"
+    save_folder "${HOME}/.aliases"
 
     echol "${Y}Set new config.:${E}"
-    sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" ${DOTPATH}/zshrc
-    create_symlink "${DOTPATH}/zshrc" "${HOME}/.zshrc"
+    sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" "${DOTPATH}/zsh/zshrc"
+    create_symlink "${DOTPATH}/zsh/zshrc" "${HOME}/.zshrc"
+    add_aliases ${DOTPATH}/zsh
     print_last
 }
 # -[ CONFIG_GIT ]---------------------------------------------------------------------------------------------
@@ -304,8 +358,9 @@ config_git()
     save_file "${HOME}/.gitconfig"
 
     echol "${Y}Set new config.:${E}"
-    create_symlink ${DOTPATH}/gitconfig ${HOME}/.gitconfig
-    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/git"
+    create_symlink "${DOTPATH}/git/gitconfig" "${HOME}/.gitconfig"
+    add_all_script_found_as_cmd "${DOTPATH}/git/custom_cmds"
+    add_aliases ${DOTPATH}/git
     print_last
 }
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
@@ -332,7 +387,8 @@ config_vim()
     create_symlink "${DOTPATH}/vim" "${HOME}/.vim"
     create_symlink "${DOTPATH}/vim/vimrc" "${HOME}/.vimrc"
     exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" && echol "Vim plugins installed." "3"
-    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/vim"
+    add_all_script_found_as_cmd "${DOTPATH}/vim/custom_cmds"
+    add_aliases ${DOTPATH}/vim
     print_last
 }
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
@@ -346,14 +402,15 @@ config_taskw()
     # TODO add taskserveur (client & serveur)
     
     echol "${Y}Save&Remove old config.:${E}"
-    save_folder "${HOME}/.task/hook" "taskhook_from_home"
+    save_folder "${HOME}/.task" "task_from_home"
     save_file "${HOME}/.taskrc" "taskrc_from_home"
     save_folder "${HOME}/.config/task" "task_from_config"
+
+    echol "${Y}Set new config.:${E}"
     create_symlink ${DOTPATH}/task ${HOME}/.config/task
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
-   
-    echol "${Y}Set new config.:${E}"
-    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/taskw"
+    add_all_script_found_as_cmd ${DOTPATH}/task/custom_cmds
+    add_aliases ${DOTPATH}/task
     print_last
 }
 # -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
@@ -361,7 +418,7 @@ install_other_custom_cmd()
 {
     print_title "Other Project/Tools:"
     echol "${Y}Install Custom Commands and Aliases:${E}"
-    add_all_cmds_and_aliases_in "${DOTPATH}/custom_cmds_and_aliases/wlc"
+    add_all_script_found_as_cmd "${DOTPATH}/wlc"
     print_last
 }
 # ============================================================================================================

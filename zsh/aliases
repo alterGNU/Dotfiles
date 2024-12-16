@@ -1,0 +1,8 @@
+# ============================================================================================================
+# ZSH ALIASES
+# ============================================================================================================
+
+# =[ COMMANDS ]===============================================================================================
+alias ccw="cc -Wall -Wextra -Werror -lbsd"
+alias is_a_gitrepo="git rev-parse --is-inside-work-tree &>/dev/null && echo yes || echo no"
+alias gitrepo_is_uptodate="git diff-index --quiet HEAD -- 2> /dev/null && echo yes || echo no"
