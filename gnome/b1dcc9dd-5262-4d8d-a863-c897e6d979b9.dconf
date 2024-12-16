@@ -1,0 +1,11 @@
+[/]
+audible-bell=false
+background-color='rgb(34,34,36)'
+cell-height-scale=1.0
+cell-width-scale=1.1200000000000001
+default-size-columns=114
+default-size-rows=59
+font='Ubuntu Sans Mono 10.5'
+foreground-color='rgb(208,207,204)'
+use-system-font=false
+use-theme-colors=false

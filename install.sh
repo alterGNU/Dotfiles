@@ -30,6 +30,7 @@
 # coreutils = tee, date, direname, realpath , ...
 declare -A PRE_REQUIS_CMDS=( \
     ["curl"]="curl" \
+    ["dconf"]="dconf-editor" \
     ["find"]="findutils" \
     ["grep"]="grep" \
     ["sed"]="sed" \
@@ -414,11 +415,22 @@ config_taskw()
     print_last
 }
 # -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
-install_other_custom_cmd()
+install_other_tool()
 {
     print_title "Other Project/Tools:"
-    echol "${Y}Install Custom Commands and Aliases:${E}"
+    echol "${Y}WikiLinkConvertor as ${G}wlc${E} command:${E}"
     add_all_script_found_as_cmd "${DOTPATH}/wlc"
+    if [[ "$XDG_CURRENT_DESKTOP" =~ GNOME|Unity ]]; then
+        echol "${Y}Configure Gnome${E}:${E}"
+        echol "Gnome-Terminal configuration" "3"
+        exec_anim "install_cmd gnome-terminal"
+        local gnome_profile=$(ls ${DOTPATH}/gnome/*.dconf)
+        local profile_id=${gnome_profile##*\/}
+        local profile_id=${profile_id%\.*}
+        dconf load "/org/gnome/terminal/legacy/profiles:/:${profile_id}/" < "${gnome_profile}" && \
+            echol "gnome_profile ${B}$(short_path ${gnome_profile})${E} successfully import." "3" || \
+            echol "${R}FAILED import gnome_profile ${B}$(short_path ${gnome_profile})${E}." "3"
+    fi
     print_last
 }
 # ============================================================================================================
@@ -430,7 +442,7 @@ if command_exists "dpkg";then
     config_git
     config_vim
     config_taskw
-    install_other_custom_cmd
+    install_other_tool
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
 fi
