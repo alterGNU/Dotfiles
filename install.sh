@@ -27,7 +27,7 @@
 # VAR
 # ============================================================================================================
 # Commands needed key=cmd_name value=package to install
-# coreutils = tee, date, direname, realpath , ...
+# coreutils = tee, date, direname, realpath , mktemp,
 declare -A PRE_REQUIS_CMDS=( \
     ["curl"]="curl" \
     ["dconf"]="dconf-editor" \
@@ -218,7 +218,7 @@ exec_anim()
     local cmd="${@}"
     local tmpfile=$(mktemp "${TMPDIR:-/tmp}/exec_anim_${cmd%% *}_XXXXXX")
     trap '[[ -f "${tmpfile}" ]] && rm -f "${tmpfile}"' EXIT RETURN
-    ${cmd} > "${tmpfile}" 2>&1 &
+    ${@} > "${tmpfile}" 2>&1 &
     local pid=${!}
     while kill -0 ${pid} 2>/dev/null; do
         for frame in "${frames[@]}"; do echo -en "${V} " && printf "${frame}\r" && sleep ${delay} ; done
@@ -240,7 +240,7 @@ install_cmd()
     if command_exists "${cmd_name}";then
         echol "pck ${G}${pck_name}${E} already installed." "3"
     else
-        exec_anim "sudo apt install -y ${pck_name}"
+        exec_anim "sudo apt install -y ${pck_name} > /dev/null 2>&1"
         echol "pck ${G}${pck_name}${E} installed successfully." "3"
     fi
 }
@@ -254,7 +254,7 @@ install_pck()
     if pck_installed "${1}";then
         echol "pck ${G}${1}${E} package already installed." "3"
     else
-        exec_anim "pkexec dpkg -i ${1}.deb && echol 'pck ${G}${1}.deb${E} installed successfully' '3' || echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'"
+        exec_anim "pkexec dpkg -i ${1}.deb > /dev/null 2>&1 && echol 'pck ${G}${1}.deb${E} installed successfully' '3' || echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'"
     fi
 }
 # =[ CUSTOM COMMANDS FUNCTIONS ]==============================================================================
