@@ -476,7 +476,8 @@ if command_exists "dpkg";then
     config_taskw
     install_other_tools
     config_desk_env
-    sudo -k
+    echol "${B}To being able to see the changes, restart the terminal."
+    sudo -k #Kill the period of time where password not needed.
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
 fi
