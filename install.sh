@@ -26,11 +26,11 @@
 # ============================================================================================================
 # VAR
 # ============================================================================================================
+# =[ PRE_REQUIS_CMDS ]========================================================================================
 # Commands needed key=cmd_name value=package to install
 # coreutils = tee, date, direname, realpath , mktemp,
 declare -A PRE_REQUIS_CMDS=( \
     ["curl"]="curl" \
-    ["dconf"]="dconf-editor" \
     ["find"]="findutils" \
     ["grep"]="grep" \
     ["sed"]="sed" \
@@ -414,22 +414,46 @@ config_taskw()
     add_aliases ${DOTPATH}/task
     print_last
 }
-# -[ INSTALL_CUSTOM_CMD_WLC ]---------------------------------------------------------------------------------
-install_other_tool()
+# -[ INSTALL OTHER TOOLS ]------------------------------------------------------------------------------------
+install_other_tools()
 {
-    print_title "Other Project/Tools:"
+    print_title "Install Other Project/Tools:"
+
     echol "${Y}WikiLinkConvertor as ${G}wlc${E} command:${E}"
     add_all_script_found_as_cmd "${DOTPATH}/wlc"
-    if [[ "$XDG_CURRENT_DESKTOP" =~ GNOME|Unity ]]; then
-        echol "${Y}Configure Gnome${E}:${E}"
-        echol "Gnome-Terminal configuration" "3"
+
+    print_last
+}
+# -[ INSTALL GNOME TERMINAL ]---------------------------------------------------------------------------------
+config_desk_env()
+{
+    # GNOME
+    if [[ "${XDG_CURRENT_DESKTOP}" =~ GNOME|Unity|XFCE ]]; then
+        print_title "Configure GNOME Desktop Environnement:"
+
+        echol "${Y}Gnome config. tools:${E}"
+        exec_anim "install_cmd dconf dconf-editor"
+        exec_anim "install_cmd fc-list fontconfig"
         exec_anim "install_cmd gnome-terminal"
-        local gnome_profile=$(ls ${DOTPATH}/gnome/*.dconf)
-        local profile_id=${gnome_profile##*\/}
-        local profile_id=${profile_id%\.*}
-        dconf load "/org/gnome/terminal/legacy/profiles:/:${profile_id}/" < "${gnome_profile}" && \
-            echol "gnome_profile ${B}$(short_path ${gnome_profile})${E} successfully import." "3" || \
-            echol "${R}FAILED import gnome_profile ${B}$(short_path ${gnome_profile})${E}." "3"
+
+        echol "${Y}Gnome install fonts:${E}"
+        local user_font_dir="${HOME}/.local/share/fonts"
+        mkdir_if_not_exist ${user_font_dir}
+        rm_broken_link_from_folder ${user_font_dir}
+        for font in "${DOTPATH}/desk-env/fonts/"*;do 
+            create_symlink ${font} ${user_font_dir}/${font##*\/}
+        done
+
+        echol "${Y}Configure Gnome-Terminal:${E}"
+        local gnome_terminal_profile_file=$(ls ${DOTPATH}/desk-env/gnome/*.dconf)
+        local gnome_terminal_profil_ID=${gnome_terminal_profile_file##*\/}
+        local gnome_terminal_profil_ID=${gnome_terminal_profil_ID%\.*}
+        dconf load "/org/gnome/terminal/legacy/profiles:/:${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
+            echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" || \
+            echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
+    else
+        print_title "Configure Unknown Desktop Environnement:"
+        echol "${R}This desktop environnement not handle for now:${E}"
     fi
     print_last
 }
@@ -442,7 +466,8 @@ if command_exists "dpkg";then
     config_git
     config_vim
     config_taskw
-    install_other_tool
+    install_other_tools
+    config_desk_env
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
 fi

@@ -1,0 +1,16 @@
+[/]
+audible-bell=false
+background-color='rgb(34,34,36)'
+backspace-binding='auto'
+cell-width-scale=1.0
+cjk-utf8-ambiguous-width='narrow'
+cursor-shape='block'
+default-size-columns=114
+default-size-rows=59
+delete-binding='auto'
+font='Mononoki Nerd Font 13'
+foreground-color='rgb(208,207,204)'
+text-blink-mode='unfocused'
+use-system-font=false
+use-theme-colors=false
+visible-name='AlterGNU'
