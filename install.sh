@@ -461,6 +461,7 @@ config_desk_env()
 # MAIN
 # ============================================================================================================
 if command_exists "dpkg";then
+    sudo -v #Start by enter once for all the password
     install_pre_requis_cmds
     config_zsh
     config_git
@@ -468,6 +469,7 @@ if command_exists "dpkg";then
     config_taskw
     install_other_tools
     config_desk_env
+    sudo -k
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
 fi
