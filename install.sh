@@ -28,7 +28,7 @@
 # ============================================================================================================
 # =[ PRE_REQUIS_CMDS ]========================================================================================
 # Commands needed key=cmd_name value=package to install
-# coreutils = tee, date, direname, realpath , mktemp,
+# coreutils = tee, date, direname, realpath , mktemp, whoami
 declare -A PRE_REQUIS_CMDS=( \
     ["curl"]="curl" \
     ["find"]="findutils" \
@@ -394,7 +394,7 @@ config_vim()
     echol "${Y}Set new config.:${E}"
     create_symlink "${DOTPATH}/vim" "${HOME}/.vim"
     create_symlink "${DOTPATH}/vim/vimrc" "${HOME}/.vimrc"
-    exec_anim "vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa'" && echol "Vim plugins installed." "3"
+    vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa' && echol "Vim plugins installed." "3" || echol "${R}FAILED to install Vim plugins.${E}" "3"
     add_all_script_found_as_cmd "${DOTPATH}/vim/custom_cmds"
     add_aliases ${DOTPATH}/vim
     print_last
