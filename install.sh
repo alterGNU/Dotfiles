@@ -236,12 +236,14 @@ command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
 install_cmd()
 {
     local cmd_name=${1}
-    [[ -z ${2} ]] && local pck_name=${1} || local pck_name=${2}
+    local pck_name=${1}
+    [[ ${#} -eq 2 ]] && local pck_name=${2}
     if command_exists "${cmd_name}";then
-        echol "pck ${G}${pck_name}${E} already installed." "3"
+        echol "pck ${B}${pck_name}${E} already installed." "3"
     else
-        exec_anim "sudo apt-get install -y ${pck_name} > /dev/null 2>&1"
-        echol "pck ${G}${pck_name}${E} installed successfully." "3"
+        sudo apt-get install -y "${pck_name}" > /dev/null 2>&1 && \
+        echol "pck ${B}${pck_name}${E} successfully installed." "3" || \
+        echol "${R}FAILED to install pck ${B}${pck_name}${E}." "3"
     fi
 }
 # -[ PACKAGE_INSTALLED ]--------------------------------------------------------------------------------------
@@ -252,9 +254,11 @@ pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "inst
 install_pck()
 {
     if pck_installed "${1}";then
-        echol "pck ${G}${1}${E} package already installed." "3"
+        echol "pck ${B}${1}.deb${E} was already installed." "3"
     else
-        exec_anim "pkexec dpkg -i ${1}.deb > /dev/null 2>&1 && echol 'pck ${G}${1}.deb${E} installed successfully' '3' || echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'"
+        pkexec dpkg -i ${1}.deb > /dev/null 2>&1 && \
+            echol 'pck ${B}${1}.deb${E} installed successfully' '3' || \
+            echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'
     fi
 }
 # =[ CUSTOM COMMANDS FUNCTIONS ]==============================================================================
@@ -313,7 +317,8 @@ install_pre_requis_cmds()
     print_title "Required tools."
     echol "${Y}Check all commands/packages needed${E}:"
     install_pck "apt"
-    for cmd in "${!PRE_REQUIS_CMDS[@]}";do exec_anim "install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}" ; done
+    for cmd in "${!PRE_REQUIS_CMDS[@]}";do 
+        exec_anim "install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}" ; done
     print_last
 }
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
@@ -463,12 +468,12 @@ config_desk_env()
 if command_exists "dpkg";then
     sudo -v #Start by enter once for all the password
     install_pre_requis_cmds
-    config_zsh
-    config_git
-    config_vim
-    config_taskw
-    install_other_tools
-    config_desk_env
+    #config_zsh
+    #config_git
+    #config_vim
+    #config_taskw
+    #install_other_tools
+    #config_desk_env
     sudo -k
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
