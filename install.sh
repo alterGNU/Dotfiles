@@ -341,7 +341,7 @@ config_zsh()
     if [ -d "${HOME}/.oh-my-zsh" ]; then
         echol "${B}Oh-My-Zsh${E} was already installed." "3"
     else
-        exec_anim 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" --unattended'
+        exec_anim "sh -c \"\$\(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh\)\" --unattended"
         [[ -d ~/.oh-my-zsh ]] && echol "${E}Oh-My-Zsh${E} successfully installed." "3" || echol "${R}FAILED to install ${B}Oh-My-Zsh${R}.${E}" "3"
     fi
 
@@ -394,7 +394,7 @@ config_vim()
     echol "${Y}Set new config.:${E}"
     create_symlink "${DOTPATH}/vim" "${HOME}/.vim"
     create_symlink "${DOTPATH}/vim/vimrc" "${HOME}/.vimrc"
-    vim -es -c 'PlugInstall' -c 'PlugUpdate' -c 'qa' && echol "Vim plugins installed." "3" || echol "${R}FAILED to install Vim plugins.${E}" "3"
+    exec_anim "vim -c 'PlugInstall' -c 'PlugUpdate' -c 'qa' > /dev/null 2>&1" && echol "Vim plugins installed." "3" || echol "${R}FAILED to install Vim plugins.${E}" "3"
     add_all_script_found_as_cmd "${DOTPATH}/vim/custom_cmds"
     add_aliases ${DOTPATH}/vim
     print_last
