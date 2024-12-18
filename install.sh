@@ -15,7 +15,6 @@
 #
 # TODO :
 #   - [ ] Create func add_cmd_folder that take only a folder that contains fun/script and exec add_custom_cmd automatically (filename - ext = cmd name)
-#   - [ ] Add Dotfiles/custom_cmds_and_aliases/git/* 
 #   - [ ] Add taskserver package and config file (server & client)
 #   - [ ] Usemode with git-clone (no git clone needed)
 #   - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
@@ -156,6 +155,19 @@ echol()
     echo -en "${line}"
     pnt "\x20" $(( LEN - size - 1 ))
     [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${V}\n" || echo -en "\n"
+}
+# -[ END_MESSAGE ]--------------------------------------------------------------------------------------------
+# echo all arg by line in a gold blinking box
+mess_in_gold_blinking_box()
+{
+    echo -en "${YY}╭" && pnt "─" $((LEN-2)) && echo -en "╮\n"
+    for arg in "${@}";do
+        local line="${YY}│${E} ${arg}"
+        local size=$(get_len "${line}")
+        echo -en "${line}" && pnt "\x20" $(( LEN - size - 1 )) && echo -en "${YY}│${E}"
+        [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${sym}\n" || echo -en "\n"
+    done
+    echo -en "${YY}╰" && pnt "─" $((LEN-2)) && echo -en "╯\n"
 }
 # =[ UTILS MANIP. FILES AND FOLDERS FCTS ]====================================================================
 # -[ INSERT_LINE_IN_FILE_UNDER_MATCH ]------------------------------------------------------------------------
@@ -478,7 +490,11 @@ if command_exists "dpkg";then
     config_taskw
     install_other_tools
     config_desk_env
-    echo -e "${YY}To see all the changes in effect, exit and re-enter the terminal.${E}"
+    mess_in_gold_blinking_box \
+        "${Y}❖ ${G}Installation complete, to see all the changes, you'll have to restart your gnome-session:" \
+        "   ${Y}‣${E}If your font is weird          ${B}➪${E}   Fix it by login-out/login-in" \
+        "   ${Y}‣${E}If your SHELL is not zsh yet   ${B}➪${E}   Fix it by login-out/login-in" \
+        "${Y}🡆 ${R}To log-out you can just type: ${E}'${B}sudo kill -u $(whoami)${E}'"
     sudo -k #Kill the period of time where password not needed.
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
