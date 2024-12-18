@@ -14,6 +14,7 @@
 #   - if the comment start with ☑ , that means its value can be change by the user.
 #   - if the comment start with ☒ , that means its value can NOT be change by the user.
 # - Dotfiles project can be clone anywhere, this script will create ENV-VAR and symbolic-links so that the dotfiles work.
+# - Dotfiles project LOG folder, ignore by git, contains install.sh log name by date.
 #
 # TODO :
 #   - FEATURES:
@@ -60,6 +61,8 @@ FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"                  # ☒ Name of the back
 DOTPATH=$(dirname $(realpath ${0}))                       # ☒ Path of the Dotfile folder (⚠ TO CHANGE WHEN INSTALL WITH CULR/WGET IMPLEMENTED ⚠ )
 CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"                # ☑ Folder where bin/custom cmd link are store (add to PATH ENV-VAR.)
 ACTIVE_ALIASES_FOLDER="${DOTPATH}/active_custom_aliases"  # ☒ Folder where actives aliases files are store (source in zshrc)
+LOG_FOLDER="${DOTPATH}/logs"                              # ☑ Folder where logs of this script are stored.
+LOG_FILE="${LOG_FOLDER}/$(date +%Y_%m_%d.%Hh%Mm%Ss).log"  # ☒ Log file (create everytime this script in exe)
 # =[ LAYOUT ]=================================================================================================
 LEN=110                                                   # ☑ Width of the box(line size of this script stdout)
 # -[ COLORS ]-------------------------------------------------------------------------------------------------
@@ -308,7 +311,7 @@ exec_anim()
 }
 # -[ COMMAND_EXISTS ]-----------------------------------------------------------------------------------------
 # Check if a command is installed
-command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
+command_exists(){ command -v "${1}" >> ${LOG_FILE} 2>&1 ; }
 # -[ INSTALL_CMD ]--------------------------------------------------------------------------------------------
 # Check if command is installed, else install it
 install_cmd()
@@ -319,7 +322,7 @@ install_cmd()
     if command_exists "${cmd_name}";then
         echol "pck ${B}${pck_name}${E} already installed." "3"
     else
-        exec_anim "sudo apt-get install -y ${pck_name}" && \
+        exec_anim "sudo apt-get install -y ${pck_name}" >> ${LOG_FILE} 2>&1 && \
         { echol "pck ${B}${pck_name}${E} successfully installed." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${B}${pck_name}${E} package successfully installed." ) ; } || \
         echol "${R}FAILED to install pck ${B}${pck_name}${E}." "3"
     fi
@@ -335,7 +338,7 @@ install_pck()
     if pck_installed "${1}";then
         echol "pck ${B}${1}.deb${E} was already installed." "3"
     else
-        exec_anim "pkexec dpkg -i ${1}.deb" && \
+        exec_anim "pkexec dpkg -i ${1}.deb" >> ${LOG_FILE} 2>&1 && \
             { echol 'pck ${B}${1}.deb${E} installed successfully' '3' && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${1}.deb${R}\`${E} package successfully installed." ) ; } || \
             echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'
     fi
@@ -413,7 +416,7 @@ config_zsh()
     local which_zsh=$(which zsh)
     [[ -z "${which_zsh}" ]] && { echol "FAILED to install zsh" && exit 4 ; }
     if [[ "${SHELL}" != "${which_zsh}" ]];then
-        sudo usermod -s "${which_zsh}" "$(whoami)" > /dev/null 2>&1 && \
+        sudo usermod -s "${which_zsh}" "$(whoami)" >> ${LOG_FILE} 2>&1 && \
             echol "${G}zsh${E} successfully set as default shell" "3" || \
             { echol "${R}FAILED to set ${B}zsh${R} as default shell" "3" && exit 3 ; }
         FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} command has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session.${E} ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
@@ -425,7 +428,7 @@ config_zsh()
     if [ -d "${HOME}/.oh-my-zsh" ]; then
         echol "${B}Oh-My-Zsh${E} was already installed." "3"
     else
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended > /dev/null 2>&1
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended >> ${LOG_FILE} 2>&1
         [[ -d ~/.oh-my-zsh ]] && echol "${E}Oh-My-Zsh${E} successfully installed." "3" || echol "${R}FAILED to install ${B}Oh-My-Zsh${R}.${E}" "3"
         FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}Oh-My-Zsh${R}\`${E} module has been successfully installed." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session. ${E}${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     fi
@@ -481,7 +484,7 @@ config_vim()
     echol "${Y}Set new config.:${E}"
     create_symlink "${DOTPATH}/vim" "${HOME}/.vim"
     create_symlink "${DOTPATH}/vim/vimrc" "${HOME}/.vimrc"
-    echo | vim +PlugInstall +qa > /dev/null 2>&1
+    echo | vim +PlugInstall +qa >> ${LOG_FILE} 2>&1
     [[ ${?} -eq 0 ]] && echol "Vim plugins installed." "3" || echol "${R}FAILED to install Vim plugins.${E}" "3" 
     add_all_script_found_as_cmd "${DOTPATH}/vim/custom_cmds"
     add_aliases ${DOTPATH}/vim
@@ -561,8 +564,11 @@ config_desk_env()
 # ============================================================================================================
 # MAIN
 # ============================================================================================================
+mkdir_if_not_exist ${LOG_FOLDER} > /dev/null 2>&1
+insert_line_in_file_under_match "${LOG_FOLDER##*\/}/" .gitignore > /dev/null 2>&1
+touch ${LOG_FILE} > /dev/null 2>&1
 if command_exists "dpkg";then
-    sudo -v #Start by enter once for all the password
+    sudo -v                                                          # Start by enter once for all the password
     install_pre_requis_cmds
     config_zsh
     config_git
@@ -571,7 +577,7 @@ if command_exists "dpkg";then
     install_other_tools
     config_desk_env
     print_in_box -t 1 -c by "${FINAL_MESSAGE[@]}"
-    sudo -k #Kill the period of time where password not needed.
+    sudo -k                                                          # Kill the period of time where password not needed.
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
 fi
