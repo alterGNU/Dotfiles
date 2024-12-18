@@ -192,9 +192,13 @@ echol()
     local spaces=$(printf ' %.s' $(seq 1 ${indent}))
     local line="${V[2]}${spaces}${B}${sym}${E} ${1}"
     local size=$(get_len "${line}")
-    echo -en "${line}"
-    pnt "\x20" $(( LEN - size - 1 ))
-    [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${V[2]}\n" || echo -en "\n"
+    echo -en "${line}" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
+    pnt "\x20" $(( LEN - size - 1 )) | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
+    if [[ ${LEN} -gt $(( size + 1 )) ]];then
+        echo -en "${V[2]}\n" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
+    else
+        echo -en "\n" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
+    fi
 }
 # -[ END_MESSAGE ]--------------------------------------------------------------------------------------------
 # Print last-arg in a box:
@@ -292,10 +296,11 @@ save_folder()
 # =[ CMDS UTILES FCTS ]=======================================================================================
 # -[ EXEC_ANIM() ]--------------------------------------------------------------------------------------------
 # print animation in frontground while cmd exec in background the print returns.
+# If arg2 given and is a file, copy tmp into this file, else print in tty
 exec_anim()
 {
     [[ ( ${#} -gt 2 ) ]] && { echo -e "${R}WRONG USAGE of:${B}exec_anim()${R}, this function take 1 or 2 arguments, no more.${E}" && exit 3 ; }
-    [[ ( ${#} -eq 2 ) || ( ! -f "${2}" ) ]] && { echo -e "${R}WRONG USAGE of:${B}exec_anim()${R}, the second arg must be an existing file.${E}" && exit 3 ; }
+    [[ ( ${#} -eq 2 ) && ( ! -f "${2}" ) ]] && { echo -e "${R}WRONG USAGE of:${B}exec_anim()${R}, the second arg must be an existing file:'${M}${2}${R}'.${E}" && exit 3 ; }
     local frames=( 🕛  🕒  🕕  🕘 )
     local delay=0.1 
     local cmd="${1}"
@@ -401,19 +406,19 @@ add_aliases()
 install_pre_requis_cmds()
 {
     FINAL_MESSAGE+=("  ${Y}☑ Required Tools${E}" )
-    print_title "Required tools."
+    print_title "Required tools." | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
     echol "${Y}Check all commands/packages needed${E}:"
     install_pck "apt"
     for cmd in "${!PRE_REQUIS_CMDS[@]}";do 
         install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}
     done
-    print_last
+    print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
 config_zsh()
 {
     FINAL_MESSAGE+=("  ${Y}☑ ZSH${E}" )
-    print_title "ZSH config."
+    print_title "ZSH config." | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
     echol "${Y}Install&Set zsh${E}:"
     install_cmd "zsh"
     local which_zsh=$(which zsh)
@@ -444,13 +449,13 @@ config_zsh()
     sed -i "/^export DOTPATH=/c\export DOTPATH=${DOTPATH}" "${DOTPATH}/zsh/zshrc"
     create_symlink "${DOTPATH}/zsh/zshrc" "${HOME}/.zshrc"
     add_aliases ${DOTPATH}/zsh
-    print_last
+    print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
 # -[ CONFIG_GIT ]---------------------------------------------------------------------------------------------
 config_git()
 {
     FINAL_MESSAGE+=("  ${Y}☑ GIT${E}" )
-    print_title "GIT config."
+    print_title "GIT config." | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
     echol "${Y}Install commands/packages needed${E}:"
     install_cmd git
 
@@ -461,13 +466,13 @@ config_git()
     create_symlink "${DOTPATH}/git/gitconfig" "${HOME}/.gitconfig"
     add_all_script_found_as_cmd "${DOTPATH}/git/custom_cmds"
     add_aliases ${DOTPATH}/git
-    print_last
+    print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
 config_vim()
 {
     FINAL_MESSAGE+=("  ${Y}☑ VIM${E}" )
-    print_title "VIM config."
+    print_title "VIM config." | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 
     echol "${Y}Install commands/packages needed${E}:"
     install_cmd vim
@@ -487,23 +492,23 @@ config_vim()
     echol "${Y}Set new config.:${E}"
     create_symlink "${DOTPATH}/vim" "${HOME}/.vim"
     create_symlink "${DOTPATH}/vim/vimrc" "${HOME}/.vimrc"
-    echo | vim +PlugInstall +qa >> ${LOG_FILE} 2>&1
+    echo | vim +PlugInstall +qa > /dev/null 2>&1
     [[ ${?} -eq 0 ]] && echol "Vim plugins installed." "3" || echol "${R}FAILED to install Vim plugins.${E}" "3" 
     add_all_script_found_as_cmd "${DOTPATH}/vim/custom_cmds"
     add_aliases ${DOTPATH}/vim
-    print_last
+    print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
 config_taskw()
 {
     FINAL_MESSAGE+=("  ${Y}☑ Task&Time-Warrior${E}" )
-    print_title "TASKWARRIOR config."
-    
+    print_title "TASKWARRIOR config." | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
+
     echol "${Y}Install commands/packages needed${E}:"
     install_cmd task taskwarrior
     install_cmd timew timewarrior
     # TODO add taskserveur (client & serveur)
-    
+
     echol "${Y}Save&Remove old config.:${E}"
     save_folder "${HOME}/.task" "task_from_home"
     save_file "${HOME}/.taskrc" "taskrc_from_home"
@@ -514,13 +519,13 @@ config_taskw()
     create_symlink ${DOTPATH}/task/taskrc ${HOME}/.taskrc
     add_all_script_found_as_cmd ${DOTPATH}/task/custom_cmds
     add_aliases ${DOTPATH}/task
-    print_last
+    print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
 # -[ INSTALL OTHER TOOLS ]------------------------------------------------------------------------------------
 install_other_tools()
 {
     FINAL_MESSAGE+=("  ${Y}☑ Other Tools&Projects${E}" )
-    print_title "Install Other Project/Tools:"
+    print_title "Install Other Project/Tools:" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 
     echol "${Y}WikiLinkConvertor as ${G}wlc${E} command:${E}"
     add_all_script_found_as_cmd "${DOTPATH}/wlc"
@@ -528,7 +533,7 @@ install_other_tools()
     echol "${Y}Install usefull commands:${E}"
     install_cmd "tree"
 
-    print_last
+    print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
 # -[ INSTALL GNOME TERMINAL ]---------------------------------------------------------------------------------
 config_desk_env()
@@ -536,7 +541,7 @@ config_desk_env()
     # GNOME
     if [[ "${XDG_CURRENT_DESKTOP}" =~ GNOME|Unity|XFCE ]]; then
         FINAL_MESSAGE+=("  ${Y}☑ Gnome Desktop Env.${E}" )
-        print_title "Configure GNOME Desktop Environnement:"
+        print_title "Configure GNOME Desktop Environnement:" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 
         echol "${Y}Gnome config. tools:${E}"
         install_cmd dconf dconf-editor
@@ -560,9 +565,10 @@ config_desk_env()
             echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
     else
         print_title "Configure Unknown Desktop Environnement:"
+        echo -en "\nConfigure Unknown Desktop Environnement:" >> ${LOG_FILE}
         echol "${R}This desktop environnement not handle for now:${E}"
     fi
-    print_last
+    print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
 # ============================================================================================================
 # MAIN
@@ -579,6 +585,7 @@ if command_exists "dpkg";then
     config_taskw
     install_other_tools
     config_desk_env
+    FINAL_MESSAGE+=("${Y}⌕ ${M}${U}For more details, this installation create a log-file:${E}" "  ${Y}⤷ ${B}${LOG_FILE}${E}" )
     print_in_box -t 1 -c by "${FINAL_MESSAGE[@]}"
     sudo -k                                                          # Kill the period of time where password not needed.
 else
