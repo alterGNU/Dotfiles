@@ -14,6 +14,7 @@
 # - VAR-ENV : DOTPATH (set at "" by default), is the path to the Dotfiles folder
 #
 # TODO :
+#   - [ ] Instead of /dev/null, redirect in log file...(I can gitignore theses files and put then in DOTPATH)
 #   - [ ] Create func add_cmd_folder that take only a folder that contains fun/script and exec add_custom_cmd automatically (filename - ext = cmd name)
 #   - [ ] Add taskserver package and config file (server & client)
 #   - [ ] Usemode with git-clone (no git clone needed)
@@ -182,7 +183,7 @@ insert_line_in_file_under_match()
     if grep -x -q "${1}" "${2}";then
         echol "line:'${G}$(short_path ${1})${E}' was already in file:'${M}$(short_path ${2})${E}'." "3"
     else
-        if [[ -n ${3} ]] && grep -q "${3}" "${2}";then
+        if [[ -n ${3} ]] && grep -E -q "${3}" "${2}";then
             sed -i "/${3}/a\\${1}" "${2}" && echol "line '${B}$(short_path ${1})${E}' insert successfully in file=${M}$(short_path ${2})${E}" "3"
         else
             echo "${1}" >> "${2}" && echol "line '${B}$(short_path ${1})${E}' append successfully to EOF of ${M}$(short_path ${2})${E}" "3"
@@ -300,7 +301,7 @@ add_all_script_found_as_cmd()
         # Clean bin_folder of broken link
         rm_broken_link_from_folder ${CUSTOM_CMD_BIN_FOLDER}
         # Check if bin_folder in var-env path, else add it by writting in zshrc file.
-        [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]] && insert_line_in_file_under_match "export PATH=\"\${PATH}:\${CUSTOM_CMD_BIN_FOLDER}\"" "${DOTPATH}/zsh/zshrc" "# -[ PATH ]---------------------------------------------------------------------------------------------------"
+        [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]] && insert_line_in_file_under_match "export PATH=\"\${PATH}:${CUSTOM_CMD_BIN_FOLDER}\"" "${DOTPATH}/zsh/zshrc" "^.....PATH"
         # Transform script into custom command by creating link inside
         for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
     else
@@ -494,7 +495,7 @@ if command_exists "dpkg";then
         "${Y}❖ ${G}Installation complete, to see all the changes, you'll have to restart your gnome-session:" \
         "   ${Y}‣${E}If your font is weird          ${B}➪${E}   Fix it by login-out/login-in" \
         "   ${Y}‣${E}If your SHELL is not zsh yet   ${B}➪${E}   Fix it by login-out/login-in" \
-        "${Y}🡆 ${R}To log-out you can just type: ${E}'${B}sudo kill -u $(whoami)${E}'"
+        "${Y}🡆 ${R}To log-out you can just type: ${E}'${B}sudo pkill -u $(whoami)${E}'"
     sudo -k #Kill the period of time where password not needed.
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
