@@ -331,7 +331,7 @@ config_zsh()
     local which_zsh=$(which zsh)
     [[ -z "${which_zsh}" ]] && { echol "FAILED to install zsh" && exit 4 ; }
     if [[ "${SHELL}" != "${which_zsh}" ]];then
-        sudo usermod -s "${which_zsh}" "$(whoami)" && \
+        sudo usermod -s "${which_zsh}" "$(whoami)" > /dev/null 2>&1 && \
             echol "${G}zsh${E} successfully set as default shell" "3" || \
             { echol "${R}FAILED to set ${B}zsh${R} as default shell" "3" && exit 3 ; }
     else
