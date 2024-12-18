@@ -587,8 +587,8 @@ config_desk_env()
 # MAIN
 # ============================================================================================================
 mkdir_if_not_exist ${LOG_FOLDER} > /dev/null 2>&1
-insert_line_in_file_under_match "${LOG_FOLDER##*\/}/" .gitignore > /dev/null 2>&1
-touch ${LOG_FILE} > /dev/null 2>&1
+insert_line_in_file_under_match "${LOG_FOLDER##*\/}/" "${DOTPATH}/.gitignore" > /dev/null 2>&1
+touch ${LOG_FILE} > /dev/null 2>&1 
 if command_exists "dpkg";then
     sudo -v                                                          # Start by enter once for all the password
     install_pre_requis_cmds
