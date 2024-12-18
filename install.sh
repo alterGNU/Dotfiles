@@ -335,7 +335,7 @@ install_pck()
     if pck_installed "${1}";then
         echol "pck ${B}${1}.deb${E} was already installed." "3"
     else
-        pkexec dpkg -i ${1}.deb > /dev/null 2>&1 && \
+        exec_anim "pkexec dpkg -i ${1}.deb" && \
             { echol 'pck ${B}${1}.deb${E} installed successfully' '3' && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${1}.deb${R}\`${E} package successfully installed." ) ; } || \
             echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'
     fi
