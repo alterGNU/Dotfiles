@@ -68,7 +68,7 @@ ACTIVE_ALIASES_FOLDER="${DOTPATH}/active_custom_aliases"  # ☒ Folder where act
 LOG_FOLDER="${DOTPATH}/logs"                              # ☑ Folder where logs of this script are stored.
 LOG_FILE="${LOG_FOLDER}/$(date +%Y_%m_%d.%Hh%Mm%Ss).log"  # ☒ Log file (create everytime this script in exe)
 # =[ LAYOUT ]=================================================================================================
-LEN=110                                                   # ☑ Width of the box(line size of this script stdout)
+LEN=100                                                   # ☑ Width of the box(line size of this script stdout)
 # -[ COLORS ]-------------------------------------------------------------------------------------------------
 R="\033[1;31m"                                            # ☒ START RED
 G="\033[1;32m"                                            # ☒ START GREEN
@@ -108,7 +108,10 @@ DRC=( "┘" "┛" "╝" "╯" )                                   # ☒ Down Rig
  RT=( "┤" "┫" "╣" "┤" )                                   # ☒ Right T
  LT=( "┴" "┻" "╩" "┴" )                                   # ☒ Left T
 # -[ TEXT TO DISPLAY ]----------------------------------------------------------------------------------------
-FINAL_MESSAGE=( "${Y}❖ ${U}INSTALLATION COMPLETE${E} ${Y}❖${E}" ) # ☒ Text to display at the end
+# ☒ Text to display at the beginning
+DISPLAY_VAR=( "${Y}❖ ${G}${U}VARIABLES:${E}" " ${Y}‣${B}\${BCK}${E}='${M}${BCK}${Y}${E}'" " ${Y}‣${B}\${FLD}${E}='${M}${FLD}${Y}${E}'" " ${Y}‣${B}\${DOTPATH}${E}='${M}${DOTPATH}${Y}${E}'" " ${Y}‣${B}\${CUSTOM_CMD_BIN_FOLDER}${E}='${M}${CUSTOM_CMD_BIN_FOLDER}${Y}${E}'" " ${Y}‣${B}\${ACTIVE_ALIASES_FOLDER}${E}='${M}${ACTIVE_ALIASES_FOLDER}${Y}${E}'" " ${Y}‣${B}\${LOG_FOLDER}${E}='${M}${LOG_FOLDER}${Y}${E}'" " ${Y}‣${B}\${LOG_FILE}${E}='${M}${LOG_FILE}${Y}${E}'")
+# ☒ Text to display at the end
+FINAL_MESSAGE=( "${Y}❖ ${U}INSTALLATION COMPLETE${E}${Y}❖${E}" )
 
 # ============================================================================================================
 # FUNCTIONS
@@ -118,7 +121,10 @@ FINAL_MESSAGE=( "${Y}❖ ${U}INSTALLATION COMPLETE${E} ${Y}❖${E}" ) # ☒ Text
 # Replace long path by Variable name /home/user/toto/titi -> ${HOME}/toto/titi
 short_path()
 {
-    local short=${1/${DOTPATH}/\$\{DOTPATH\}}
+    local short=$(realpath ${1})
+    local short=${short/${CUSTOM_CMD_BIN_FOLDER}/\$\{BIN_FOLDER\}}
+    local short=${short/${LOG_FOLDER}/\$\{LOG_FOLDER\}}
+    local short=${short/${DOTPATH}/\$\{DOTPATH\}}
     local short=${short/${HOME}/\$\{HOME\}}
     echo ${short}
 }
@@ -132,7 +138,7 @@ del_symlink()
     if [[ -h "${1}" ]];then
         local solved_link=$(readlink -f "${1}")
         rm "${1}"
-        echol "${U}rm sym-link${E}: '${LB}$(short_path ${1})${E}' ➟  '${M}$(short_path ${solved_link})${E}'" "3"
+        echol "${U}rm sym-link${E}: '${LB}$(short_path ${1})${E}'➟ '${M}$(short_path ${solved_link})${E}'" "3"
     fi
 }
 # -[ CREATE SYM-LINK ]----------------------------------------------------------------------------------------
@@ -142,16 +148,16 @@ create_symlink()
     if [[ -L "${2}" ]];then
         local old_link=$(readlink -f "${1}")
         if [[ "${old_link}" == "${1}" ]];then
-            echol "${U}Link already exist${E}: '${LB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3"
+            echol "${U}Link already exist${E}:${LB}$(short_path ${2})${E}➟ ${M}$(short_path ${1})${E}" "3"
         else
-            echol "${U}Link already exist${E}: '${LB}$(short_path ${2})${E}' ${R}↛${E} '${M}$(short_path ${1})${E}'" "3"
-            echol "                                            ${G}⮡${E} '${M}${old_link}${E}'" "3"
+            echol "${U}Link already exist${E}:${LB}$(short_path ${2})${E}${R}↛ ${E}${M}$(short_path ${1})${E}" "3"
+            echol "                                            ${G}⮡${E} ${M}${old_link}${E}" "3"
         fi
     else
-        ln -s "${1}" "${2}" && echol "${U}Create sym-link${E}: '${LB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3" || { echol "${R}FAILED to create sym-link: '${LB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "3" && exit 3 ; }
+        ln -s "${1}" "${2}" && echol "${U}Create sym-link${E}:${LB}$(short_path ${2})${E}➟ ${M}$(short_path ${1})${E}" "3" || { echol "${R}FAILED to create sym-link: '${LB}$(short_path ${2})${R}'➟ '${M}$(short_path ${1})${E}'" "3" && exit 3 ; }
         if ! is_a_valid_symlink "${2}";then
-            echol "${R}Sym-link created not valid:'${LB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "5"
-            rm "${2}" && echol "${R}Sym-link '${LB}$(short_path ${2})${R}' REMOVED!" "5"
+            echol "${R}Sym-link created not valid:${LB}$(short_path ${2})${R}➟ ${M}$(short_path ${1})${E}" "5"
+            rm "${2}" && echol "${R}Sym-link ${LB}$(short_path ${2})${R} REMOVED!" "5"
             return 3;
         fi
     fi
@@ -240,10 +246,11 @@ print_in_box()
     for line in "${text[@]}";do
         local line="${C}${V[${box_type}]}${E} ${line}"
         local size=$(get_len "${line}")
-        echo -en "${line}" && pnt "\x20" $(( LEN - size - 1 )) && echo -en "${C}${V[${box_type}]}${E}"
+        echo -en "${line}" && pnt "\x20" $(( LEN - size - 1 ))
+        [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${C}${V[${box_type}]}${E}"
         [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${sym}\n" || echo -en "\n"
     done
-    echo -en "${C}${DLC[${box_type}]}" && pnt "${H[${box_type}]}" $((LEN-2)) && echo -en "${DRC[${box_type}]}\n"
+    echo -en "${C}${DLC[${box_type}]}" && pnt "${H[${box_type}]}" $((LEN-2)) && echo -en "${DRC[${box_type}]}${E}\n"
 }
 # =[ UTILS MANIP. FILES AND FOLDERS FCTS ]====================================================================
 # -[ INSERT_LINE_IN_FILE_UNDER_MATCH ]------------------------------------------------------------------------
@@ -590,6 +597,7 @@ mkdir_if_not_exist ${LOG_FOLDER} > /dev/null 2>&1
 insert_line_in_file_under_match "${LOG_FOLDER##*\/}/" "${DOTPATH}/.gitignore" > /dev/null 2>&1
 touch ${LOG_FILE} > /dev/null 2>&1 
 if command_exists "dpkg";then
+    print_in_box -t 3 -c r "${DISPLAY_VAR[@]}"
     sudo -v                                                          # Start by enter once for all the password
     install_pre_requis_cmds
     config_zsh
@@ -599,7 +607,7 @@ if command_exists "dpkg";then
     install_other_tools
     config_desk_env
     FINAL_MESSAGE+=("${Y}⌕ ${M}${U}For more details, this installation create a log-file:${E}" "  ${Y}⤷ ${B}${LOG_FILE}${E}" )
-    print_in_box -t 1 -c by "${FINAL_MESSAGE[@]}"
+    print_in_box -t 1 -c br "${FINAL_MESSAGE[@]}"
     sudo -k                                                          # Kill the period of time where password not needed.
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
