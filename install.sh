@@ -54,6 +54,7 @@ M="\033[1;33m"                                           # START BROWN
 U="\033[4;29m"                                           # START UNDERSCORED
 B="\033[1;36m"                                           # START BLUE
 Y="\033[0;93m"                                           # START YELLOW
+YY="\033[5;93m"                                           # START YELLOW
 # Commands needed
 BB="\033[1;96m"                                          # START BLUE
 E="\033[0m"                                              # END color balise
@@ -158,7 +159,7 @@ echol()
 }
 # =[ UTILS MANIP. FILES AND FOLDERS FCTS ]====================================================================
 # -[ INSERT_LINE_IN_FILE_UNDER_MATCH ]------------------------------------------------------------------------
-# If not already there, insert <line>(arg1) in <file>(arg2) under the <matching_line>(arg3:opt):
+# If not already there, insert <line>(arg1) in <file>(arg2) under the <matching_line>(arg3
 #   - If arg3:opt given and found : insert <line> under <matching_line> in <file>
 #   - else (arg3 given but not found OR not given) : insert <line> at the end of <file>
 insert_line_in_file_under_match()
@@ -341,7 +342,7 @@ config_zsh()
     if [ -d "${HOME}/.oh-my-zsh" ]; then
         echol "${B}Oh-My-Zsh${E} was already installed." "3"
     else
-        exec_anim "sh -c \"\$\(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh\)\" --unattended"
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended > /dev/null 2>&1
         [[ -d ~/.oh-my-zsh ]] && echol "${E}Oh-My-Zsh${E} successfully installed." "3" || echol "${R}FAILED to install ${B}Oh-My-Zsh${R}.${E}" "3"
     fi
 
@@ -394,7 +395,8 @@ config_vim()
     echol "${Y}Set new config.:${E}"
     create_symlink "${DOTPATH}/vim" "${HOME}/.vim"
     create_symlink "${DOTPATH}/vim/vimrc" "${HOME}/.vimrc"
-    exec_anim "vim -c 'PlugInstall' -c 'PlugUpdate' -c 'qa' > /dev/null 2>&1" && echol "Vim plugins installed." "3" || echol "${R}FAILED to install Vim plugins.${E}" "3"
+    echo | vim +PlugInstall +qa > /dev/null 2>&1
+    [[ ${?} -eq 0 ]] && echol "Vim plugins installed." "3" || echol "${R}FAILED to install Vim plugins.${E}" "3" 
     add_all_script_found_as_cmd "${DOTPATH}/vim/custom_cmds"
     add_aliases ${DOTPATH}/vim
     print_last
@@ -455,7 +457,7 @@ config_desk_env()
         local gnome_terminal_profile_file=$(ls ${DOTPATH}/desk-env/gnome/*.dconf)
         local gnome_terminal_profil_ID=${gnome_terminal_profile_file##*\/}
         local gnome_terminal_profil_ID=${gnome_terminal_profil_ID%\.*}
-        dconf load "/org/gnome/terminal/legacy/profiles:/:${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
+        dconf load "/org/gnome/terminal/legacy/profiles${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
             echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" || \
             echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
     else
@@ -476,7 +478,7 @@ if command_exists "dpkg";then
     config_taskw
     install_other_tools
     config_desk_env
-    echol "${B}To being able to see the changes, restart the terminal."
+    echo -e "${YY}To see all the changes in effect, exit and re-enter the terminal.${E}"
     sudo -k #Kill the period of time where password not needed.
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
