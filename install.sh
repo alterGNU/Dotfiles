@@ -319,8 +319,8 @@ install_cmd()
     if command_exists "${cmd_name}";then
         echol "pck ${B}${pck_name}${E} already installed." "3"
     else
-        sudo apt-get install -y "${pck_name}" > /dev/null 2>&1 && \
-        { echol "pck ${B}${pck_name}${E} successfully installed." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${pck_name}${R}\`${E} package successfully installed." ) ; } || \
+        exec_anim "sudo apt-get install -y ${pck_name}" && \
+        { echol "pck ${B}${pck_name}${E} successfully installed." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${B}${pck_name}${E} package successfully installed." ) ; } || \
         echol "${R}FAILED to install pck ${B}${pck_name}${E}." "3"
     fi
 }
@@ -394,11 +394,12 @@ add_aliases()
 # check all needed tools, if not installed, install them
 install_pre_requis_cmds()
 {
+    FINAL_MESSAGE+=("  ${Y}☑ Required Tools${E}" )
     print_title "Required tools."
     echol "${Y}Check all commands/packages needed${E}:"
     install_pck "apt"
     for cmd in "${!PRE_REQUIS_CMDS[@]}";do 
-        exec_anim "install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}"
+        install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}
     done
     print_last
 }
@@ -415,7 +416,7 @@ config_zsh()
         sudo usermod -s "${which_zsh}" "$(whoami)" > /dev/null 2>&1 && \
             echol "${G}zsh${E} successfully set as default shell" "3" || \
             { echol "${R}FAILED to set ${B}zsh${R} as default shell" "3" && exit 3 ; }
-        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} command has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to restart your session. ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
+        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} command has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session.${E} ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     else
         echol "${G}zsh${E} already set as default shell." "3"
     fi
@@ -426,7 +427,7 @@ config_zsh()
     else
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended > /dev/null 2>&1
         [[ -d ~/.oh-my-zsh ]] && echol "${E}Oh-My-Zsh${E} successfully installed." "3" || echol "${R}FAILED to install ${B}Oh-My-Zsh${R}.${E}" "3"
-        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}Oh-My-Zsh${R}\`${E} module has been successfully installed." "    ${Y}⤿${E} But to see changes, you may have to restart your session. ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
+        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}Oh-My-Zsh${R}\`${E} module has been successfully installed." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session. ${E}${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     fi
 
     echol "${Y}Save&Remove old config.:${E}"
@@ -445,7 +446,7 @@ config_git()
     FINAL_MESSAGE+=("  ${Y}☑ GIT${E}" )
     print_title "GIT config."
     echol "${Y}Install commands/packages needed${E}:"
-    exec_anim "install_cmd git"
+    install_cmd git
 
     echol "${Y}Save&Remove old config.:${E}"
     save_file "${HOME}/.gitconfig"
@@ -463,13 +464,13 @@ config_vim()
     print_title "VIM config."
 
     echol "${Y}Install commands/packages needed${E}:"
-    exec_anim "install_cmd vim"
-    exec_anim "install_cmd cscope"
+    install_cmd vim
+    install_cmd cscope
     # Check if vim is +clipboard compatible, else install vim-gtk3
     if vim --version | grep -q "+clipboard";then
         echol "${G}vim${E} is clipboard compatible." "3"
     else
-        exec_anim "install_cmd vim-gtk3"
+        install_cmd vim-gtk3
     fi
 
     echol "${Y}Save&Remove old config.:${E}"
@@ -493,8 +494,8 @@ config_taskw()
     print_title "TASKWARRIOR config."
     
     echol "${Y}Install commands/packages needed${E}:"
-    exec_anim "install_cmd task taskwarrior"
-    exec_anim "install_cmd timew timewarrior"
+    install_cmd task taskwarrior
+    install_cmd timew timewarrior
     # TODO add taskserveur (client & serveur)
     
     echol "${Y}Save&Remove old config.:${E}"
@@ -518,6 +519,9 @@ install_other_tools()
     echol "${Y}WikiLinkConvertor as ${G}wlc${E} command:${E}"
     add_all_script_found_as_cmd "${DOTPATH}/wlc"
 
+    echol "${Y}Install usefull commands:${E}"
+    install_cmd "tree"
+
     print_last
 }
 # -[ INSTALL GNOME TERMINAL ]---------------------------------------------------------------------------------
@@ -529,9 +533,9 @@ config_desk_env()
         print_title "Configure GNOME Desktop Environnement:"
 
         echol "${Y}Gnome config. tools:${E}"
-        exec_anim "install_cmd dconf dconf-editor"
-        exec_anim "install_cmd fc-list fontconfig"
-        exec_anim "install_cmd gnome-terminal"
+        install_cmd dconf dconf-editor
+        install_cmd fc-list fontconfig
+        install_cmd gnome-terminal
 
         echol "${Y}Gnome install fonts:${E}"
         local user_font_dir="${HOME}/.local/share/fonts"
@@ -546,7 +550,7 @@ config_desk_env()
         local gnome_terminal_profil_ID=${gnome_terminal_profile_file##*\/}
         local gnome_terminal_profil_ID=${gnome_terminal_profil_ID%\.*}
         dconf load "/org/gnome/terminal/legacy/profiles:/:${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
-            { echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}Gnome-Terminal${R}\`${E} app. has been successfully configured." "    ${Y}⤿${E} But to see changes, or fix its font, you may have to restart your terminal (or restart your session)." "          ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" ) ; } || \
+            { echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${B}Gnome-Terminal${E} app. has been successfully configured." "    ${Y}⤿${E} If its font has been changed and looks weird...to fix it you have to ${U}restart your gnome-terminal.${E}" ) ; } || \
             echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
     else
         print_title "Configure Unknown Desktop Environnement:"
