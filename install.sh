@@ -6,19 +6,18 @@
 #
 # INSTALL COMMANDS
 # - If git install  : `git clone --recurse-submodules -j8 https://github.com/alterGNU/Dotfiles.git && ./Dotfiles/install.sh`
-# - If curl install : `sh -c "$(curl -fsSL https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
-# - If wget install : `sh -c "$(wget -O- https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
+# - If curl install : `sh -c "$(curl -fsSL https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)` #TODO
+# - If wget install : `sh -c "$(wget -O- https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)` #TODO
 #
 # GOOD-TO-KNOW
 # - Variables       : 
 #   - if the comment start with ☑ , that means its value can be change by the user.
-#   - if the comment start with ☒ , that means its value can NOT be change by the user.
+#   - if the comment start with ☒ , that means its value should NOT be change...
 # - Dotfiles project can be clone anywhere, this script will create ENV-VAR and symbolic-links so that the dotfiles work.
 # - Dotfiles project LOG folder, ignore by git, contains install.sh log name by date.
 #
 # TODO :
 #   - FEATURES:
-#       - [ ] CREATE LOG FILES      : Instead of /dev/null, redirect in log file...(I can gitignore theses files and put then in DOTPATH)
 #       - [ ] CREATE INSTALL-MODE   : Install after classic git-cloned ( Inside the Dotfiles folder)
 #       - [ ] CREATE INSTALL-MODE   : Install alone with curl or wget on raw-files-install.script ( Not Inside the Dotfiles folder)
 #       - [ ] UN-INSTALL            : Create an un-install command remove all changes done by this script and re-install newest backup made
@@ -36,6 +35,11 @@
 #           - [ ] Handle other desktop terminal (raspbian-11 not handle)
 # FIXME :
 # - [ ] Backup folder and file names start with a dot (hidden) 🡲 remove starting dot if exist.
+# - [ ] Enhanced the log file
+#       ⤷ Find a way that tee insert box element too(cleaning)
+#       ⤷ clean /../../<cmd> generate by install_cmd when command install
+#       ⤷ add mkdir return from mkdir_if_not_created
+#       ⤷ add create_symlink returns
 # ============================================================================================================
  
 # ============================================================================================================
@@ -302,7 +306,7 @@ exec_anim()
     [[ ( ${#} -gt 2 ) ]] && { echo -e "${R}WRONG USAGE of:${B}exec_anim()${R}, this function take 1 or 2 arguments, no more.${E}" && exit 3 ; }
     [[ ( ${#} -eq 2 ) && ( ! -f "${2}" ) ]] && { echo -e "${R}WRONG USAGE of:${B}exec_anim()${R}, the second arg must be an existing file:'${M}${2}${R}'.${E}" && exit 3 ; }
     local frames=( 🕛  🕒  🕕  🕘 )
-    local delay=0.1 
+    local delay=0.05
     local cmd="${1}"
     local tmpfile=$(mktemp "${TMPDIR:-/tmp}/exec_anim_${cmd%% *}_XXXXXX")
     trap '[[ -f "${tmpfile}" ]] && rm -f "${tmpfile}"' EXIT RETURN
@@ -331,7 +335,7 @@ install_cmd()
         echol "pck ${B}${pck_name}${E} already installed." "3"
     else
         exec_anim "sudo apt-get install -y ${pck_name}" "${LOG_FILE}" && \
-        { echol "pck ${B}${pck_name}${E} successfully installed." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${B}${pck_name}${E} package successfully installed." ) ; } || \
+        { echol "pck ${B}${pck_name}${E} successfully installed." "3" && FINAL_MESSAGE+=("    ${Y}✔${E} ${B}${pck_name}${E} package successfully installed." ) ; } || \
         echol "${R}FAILED to install pck ${B}${pck_name}${E}." "3"
     fi
 }
@@ -344,10 +348,10 @@ pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "inst
 install_pck()
 {
     if pck_installed "${1}";then
-        echol "pck ${B}${1}.deb${E} was already installed." "3"
+        echol "pck ${B}${1}.deb${E} already installed." "3"
     else
         exec_anim "pkexec dpkg -i ${1}.deb" "${LOG_FILE}" && \
-            { echol 'pck ${B}${1}.deb${E} installed successfully' '3' && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${1}.deb${R}\`${E} package successfully installed." ) ; } || \
+            { echol 'pck ${B}${1}.deb${E} installed successfully' '3' && FINAL_MESSAGE+=("    ${Y}✔${E} ${R}\`${B}${1}.deb${R}\`${E} package successfully installed." ) ; } || \
             echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'
     fi
 }
@@ -363,7 +367,7 @@ add_custom_cmd()
         echol "${U}Add custom command:${E} ${G}${cmd_name}${E} is already install." "3"
     else
         create_symlink ${filepath} ${CUSTOM_CMD_BIN_FOLDER}/${cmd_name}
-        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${cmd_name}${R}\`${E} custom command successfully installed." )
+        FINAL_MESSAGE+=("    ${Y}✔${E} ${R}\`${B}${cmd_name}${R}\`${E} custom command successfully installed." )
     fi
 }
 # -[ SCRIPT_FOUND_AS_CMD ]------------------------------------------------------------------------------------
@@ -407,8 +411,17 @@ install_pre_requis_cmds()
 {
     FINAL_MESSAGE+=("  ${Y}☑ Required Tools${E}" )
     print_title "Required tools." | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
-    echol "${Y}Check all commands/packages needed${E}:"
+    echol "${Y}Install apt-get${E}:"
     install_pck "apt"
+    echol "${R}\`${E}apt-get update${R}\`${E}" "3"
+    exec_anim "sudo apt-get -y update" "${LOG_FILE}"
+    echol "${R}\`${E}apt-get upgrade${R}\`${E}" "3"
+    exec_anim "sudo apt-get -y upgrade" "${LOG_FILE}"
+    echol "${R}\`${E}apt-get autoremove${R}\`${E}" "3"
+    exec_anim "sudo apt-get -y autoremove" "${LOG_FILE}"
+    FINAL_MESSAGE+=("    ${Y}✔${E} ${R}\`${B}apt update${R}\`${E}" "    ${Y}✔${E} ${R}\`${B}apt update${R}\`${E}" "    ${Y}✔${E} ${R}\`${B}apt update${R}\`${E}" )
+
+    echol "${Y}Check all commands/packages needed${E}:"
     for cmd in "${!PRE_REQUIS_CMDS[@]}";do 
         install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}
     done
@@ -427,7 +440,7 @@ config_zsh()
         sudo usermod -s "${which_zsh}" "$(whoami)" >> ${LOG_FILE} 2>&1 && \
             echol "${G}zsh${E} successfully set as default shell" "3" || \
             { echol "${R}FAILED to set ${B}zsh${R} as default shell" "3" && exit 3 ; }
-        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} command has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session.${E} ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
+        FINAL_MESSAGE+=("    ${Y}✔${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} command has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session.${E} ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     else
         echol "${G}zsh${E} already set as default shell." "3"
     fi
@@ -438,7 +451,7 @@ config_zsh()
     else
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended >> ${LOG_FILE} 2>&1
         [[ -d ~/.oh-my-zsh ]] && echol "${E}Oh-My-Zsh${E} successfully installed." "3" || echol "${R}FAILED to install ${B}Oh-My-Zsh${R}.${E}" "3"
-        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}Oh-My-Zsh${R}\`${E} module has been successfully installed." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session. ${E}${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
+        FINAL_MESSAGE+=("    ${Y}✔${E} ${R}\`${B}Oh-My-Zsh${R}\`${E} module has been successfully installed." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session. ${E}${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     fi
 
     echol "${Y}Save&Remove old config.:${E}"
@@ -561,7 +574,7 @@ config_desk_env()
         local gnome_terminal_profil_ID=${gnome_terminal_profile_file##*\/}
         local gnome_terminal_profil_ID=${gnome_terminal_profil_ID%\.*}
         dconf load "/org/gnome/terminal/legacy/profiles:/:${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
-            { echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${B}Gnome-Terminal${E} app. has been successfully configured." "    ${Y}⤿${E} If its font has been changed and looks weird...to fix it you have to ${U}restart your gnome-terminal.${E}" ) ; } || \
+            { echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" && FINAL_MESSAGE+=("    ${Y}✔${E} ${B}Gnome-Terminal${E} app. has been successfully configured." "    ${Y}⤿${E} If its font has been changed and looks weird...to fix it you have to ${U}restart your gnome-terminal.${E}" ) ; } || \
             echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
     else
         print_title "Configure Unknown Desktop Environnement:"
