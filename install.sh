@@ -457,7 +457,7 @@ config_desk_env()
         local gnome_terminal_profile_file=$(ls ${DOTPATH}/desk-env/gnome/*.dconf)
         local gnome_terminal_profil_ID=${gnome_terminal_profile_file##*\/}
         local gnome_terminal_profil_ID=${gnome_terminal_profil_ID%\.*}
-        dconf load "/org/gnome/terminal/legacy/profiles${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
+        dconf load "/org/gnome/terminal/legacy/profiles:/:${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
             echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" || \
             echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
     else
