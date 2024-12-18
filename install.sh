@@ -294,19 +294,22 @@ save_folder()
 # print animation in frontground while cmd exec in background the print returns.
 exec_anim()
 {
+    [[ ( ${#} -gt 2 ) ]] && { echo -e "${R}WRONG USAGE of:${B}exec_anim()${R}, this function take 1 or 2 arguments, no more.${E}" && exit 3 ; }
+    [[ ( ${#} -eq 2 ) || ( ! -f "${2}" ) ]] && { echo -e "${R}WRONG USAGE of:${B}exec_anim()${R}, the second arg must be an existing file.${E}" && exit 3 ; }
     local frames=( 🕛  🕒  🕕  🕘 )
     local delay=0.1 
-    local cmd="${@}"
+    local cmd="${1}"
     local tmpfile=$(mktemp "${TMPDIR:-/tmp}/exec_anim_${cmd%% *}_XXXXXX")
     trap '[[ -f "${tmpfile}" ]] && rm -f "${tmpfile}"' EXIT RETURN
-    ${@} > "${tmpfile}" 2>&1 &
+    ${1} > "${tmpfile}" 2>&1 &
     local pid=${!}
     while kill -0 ${pid} 2>/dev/null; do
         for frame in "${frames[@]}"; do echo -en "${V[2]} " && printf "${frame}\r" && sleep ${delay} ; done
     done
     printf "\r" && wait ${pid}
     local exit_code=${?}
-    printf "\r" && cat "${tmpfile}"
+    printf "\r"
+    [[ ${#} -eq 2 ]] && cat "${tmpfile}" >> "${2}" || cat "${tmpfile}"
     return ${exit_code}
 }
 # -[ COMMAND_EXISTS ]-----------------------------------------------------------------------------------------
@@ -322,7 +325,7 @@ install_cmd()
     if command_exists "${cmd_name}";then
         echol "pck ${B}${pck_name}${E} already installed." "3"
     else
-        exec_anim "sudo apt-get install -y ${pck_name}" >> ${LOG_FILE} 2>&1 && \
+        exec_anim "sudo apt-get install -y ${pck_name}" "${LOG_FILE}" && \
         { echol "pck ${B}${pck_name}${E} successfully installed." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${B}${pck_name}${E} package successfully installed." ) ; } || \
         echol "${R}FAILED to install pck ${B}${pck_name}${E}." "3"
     fi
@@ -338,7 +341,7 @@ install_pck()
     if pck_installed "${1}";then
         echol "pck ${B}${1}.deb${E} was already installed." "3"
     else
-        exec_anim "pkexec dpkg -i ${1}.deb" >> ${LOG_FILE} 2>&1 && \
+        exec_anim "pkexec dpkg -i ${1}.deb" "${LOG_FILE}" && \
             { echol 'pck ${B}${1}.deb${E} installed successfully' '3' && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${1}.deb${R}\`${E} package successfully installed." ) ; } || \
             echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'
     fi
