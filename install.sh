@@ -3,35 +3,50 @@
 # ============================================================================================================
 # INSTALL SCRIPT
 # install my conf.: make backup folder with actual dotfiles before replacing them with sym-links to my dotfiles
-# - after `git clone https://github.com/alterGNU/Dotfiles.git` just do `./Dorfiles/install.sh`
-# - with curl : `sh -c "$(curl -fsSL https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
-# PRE-REQUIS
-# - Dotfiles submodules uptodate :`git clone --recurse-submodules -j8 git@github.com:alterGNU/Dotfiles.git`
-# - zsh already install (Oh my zsh too)
+#
+# INSTALL COMMANDS
+# - If git install  : `git clone --recurse-submodules -j8 https://github.com/alterGNU/Dotfiles.git && ./Dotfiles/install.sh`
+# - If curl install : `sh -c "$(curl -fsSL https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
+# - If wget install : `sh -c "$(wget -O- https://raw.githubusercontent.com/alterGNU/Dotfiles/refs/heads/main/install.sh)`
 #
 # GOOD-TO-KNOW
-# - Dotfiles project can be clone anywhere, this script will create symbolic-links so that the dotfiles work.
-# - VAR-ENV : DOTPATH (set at "" by default), is the path to the Dotfiles folder
+# - Variables       : 
+#   - if the comment start with ☑ , that means its value can be change by the user.
+#   - if the comment start with ☒ , that means its value can NOT be change by the user.
+# - Dotfiles project can be clone anywhere, this script will create ENV-VAR and symbolic-links so that the dotfiles work.
 #
 # TODO :
-#   - [ ] Instead of /dev/null, redirect in log file...(I can gitignore theses files and put then in DOTPATH)
-#   - [ ] Create func add_cmd_folder that take only a folder that contains fun/script and exec add_custom_cmd automatically (filename - ext = cmd name)
-#   - [ ] Add taskserver package and config file (server & client)
-#   - [ ] Usemode with git-clone (no git clone needed)
-#   - [ ] Usemode with curl or wget (need to git clone recursive submodule:vim,...)
-#   - [ ] Add interactive argument (ask user before each step if install needed/wanted)
-#   - [ ] Add uninstall that also remove CUSTOM_CMD_BIN_FOLDER (solve link, if dead, rm sym-link)
+#   - FEATURES:
+#       - [ ] CREATE LOG FILES      : Instead of /dev/null, redirect in log file...(I can gitignore theses files and put then in DOTPATH)
+#       - [ ] CREATE INSTALL-MODE   : Install after classic git-cloned ( Inside the Dotfiles folder)
+#       - [ ] CREATE INSTALL-MODE   : Install alone with curl or wget on raw-files-install.script ( Not Inside the Dotfiles folder)
+#       - [ ] UN-INSTALL            : Create an un-install command remove all changes done by this script and re-install newest backup made
+#                                     ⤷ write an undo_fun by install_fun: config_zsh 🡲 undo_zsh
+#       - [ ] ZSH CUSTOM FUNCTIONS  : For now, only bash script custom fun are handle.
+#                                     ⤷ ADD binary      : C compiled home-made commands
+#                                     ⤷ ADD zsh-func    : file name after the fun, add to $FPATH, autoload in zshr
+#       - [ ] MODULAR INSTALL       : Allow user to choose the configuration with arg to chose the option to install:
+#                                     ⤷ if nothing then install all (Ex :`./install.sh`)
+#                                     ⤷ else, install pre-requis always then [-z:zsh, -g:git, -v:vim, -t:taskw, -o:other_tools, -d:desk_env] (Ex: `./install.sh -zgod`)
+#   - INSTALL FUN:
+#       - config_taskw()
+#           - [ ] Add taskserver package and config file (server & client)
+#       - config_desk_env()
+#           - [ ] Handle other desktop terminal (raspbian-11 not handle)
+# FIXME :
+# - [ ] Backup folder and file names start with a dot (hidden) 🡲 remove starting dot if exist.
 # ============================================================================================================
  
 # ============================================================================================================
 # VAR
 # ============================================================================================================
 # =[ PRE_REQUIS_CMDS ]========================================================================================
-# Commands needed key=cmd_name value=package to install
-# coreutils = tee, date, direname, realpath , mktemp, whoami
+# Dict of command:package needed by this script (always check at start)
+# coreutils package is check for multiple commands = tee, date, direname, realpath , mktemp, whoami
 declare -A PRE_REQUIS_CMDS=( \
     ["curl"]="curl" \
     ["find"]="findutils" \
+    ["git"]="git" \
     ["grep"]="grep" \
     ["sed"]="sed" \
     ["tee"]="coreutils" \
@@ -39,33 +54,54 @@ declare -A PRE_REQUIS_CMDS=( \
     ["which"]="which" \
     ["xsel"]="xsel" \
 )
-# =[ PATH ]===================================================================================================
-LEN=110                                                  # Textwidth
-BCK="${HOME}/backups"                                    # Path of the backup folder
-FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"                 # Name of the backup folder
-DOTPATH=$(dirname $(realpath ${0}))                      # Path of the Dotfile folder
 # =[ FOLDERS ]================================================================================================
-CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"               # Folder where bin/custom cmd link are store (add to PATH ENV-VAR.)
-ACTIVE_ALIASES_FOLDER="${DOTPATH}/active_custom_aliases" # Folder where actives aliases files are store (source in zshrc)
-# =[ COLORS ]=================================================================================================
-R="\033[1;31m"                                           # START RED
-G="\033[1;32m"                                           # START GREEN
-M="\033[1;33m"                                           # START BROWN
-U="\033[4;29m"                                           # START UNDERSCORED
-B="\033[1;36m"                                           # START BLUE
-Y="\033[0;93m"                                           # START YELLOW
-YY="\033[5;93m"                                           # START YELLOW
-# Commands needed
-BB="\033[1;96m"                                          # START BLUE
-E="\033[0m"                                              # END color balise
-# =[ BOX ]====================================================================================================
-  H="═"                                                  # Horizontal
-  V="║"                                                  # Vertical
- VS="╠"                                                  # Vertical Split
-TLC="╔"                                                  # Top Left Corner
-TRC="╗"                                                  # Top Right Corner
-BLC="╚"                                                  # Bottom Left Corner
-BRC="╝"                                                  # Bottom Right Corner
+BCK="${HOME}/backups"                                     # ☑ Path of the backup folder
+FLD="${BCK}/$(date +%Y_%m_%d.%Hh%Mm%Ss)"                  # ☒ Name of the backup folder
+DOTPATH=$(dirname $(realpath ${0}))                       # ☒ Path of the Dotfile folder (⚠ TO CHANGE WHEN INSTALL WITH CULR/WGET IMPLEMENTED ⚠ )
+CUSTOM_CMD_BIN_FOLDER="${HOME}/.local/bin"                # ☑ Folder where bin/custom cmd link are store (add to PATH ENV-VAR.)
+ACTIVE_ALIASES_FOLDER="${DOTPATH}/active_custom_aliases"  # ☒ Folder where actives aliases files are store (source in zshrc)
+# =[ LAYOUT ]=================================================================================================
+LEN=110                                                   # ☑ Width of the box(line size of this script stdout)
+# -[ COLORS ]-------------------------------------------------------------------------------------------------
+R="\033[1;31m"                                            # ☒ START RED
+G="\033[1;32m"                                            # ☒ START GREEN
+M="\033[1;33m"                                            # ☒ START BROWN
+U="\033[4;29m"                                            # ☒ START UNDERSCORED
+B="\033[1;36m"                                            # ☒ START BLUE
+Y="\033[0;93m"                                            # ☒ START YELLOW
+BY="\033[5;93m"                                           # ☒ START BLINKING YELLOW
+LB="\033[1;96m"                                           # ☒ START LIGHT BLUE
+E="\033[0m"                                               # ☒ END COLOR BALISE
+# Dict key:colors name/abbrev -> value:color-balise (used by print_in_box to convert option value into color-balise)
+declare -A COLORS=( \
+    ["w"]="\033[1;29m" ["white"]="\033[1;29m" ["W"]="\033[1;29m" ["WHITE"]="\033[1;29m" \
+    ["r"]="\033[1;31m" ["red"]="\033[1;31m" ["R"]="\033[1;31m" ["RED"]="\033[1;31m" \
+    ["g"]="\033[1;32m" ["green"]="\033[1;32m" ["G"]="\033[1;32m" ["GREEN"]="\033[1;32m" \
+    ["m"]="\033[1;33m" ["marron"]="\033[1;33m" ["M"]="\033[1;33m" ["MARRON"]="\033[1;33m" ["brown"]="\033[1;33m" ["BROWN"]="\033[1;33m"\
+    ["b"]="\033[1;36m" ["blue"]="\033[1;36m" ["B"]="\033[1;36m" ["BLUE"]="\033[1;36m" \
+    ["y"]="\033[0;93m" ["yellow"]="\033[0;93m" ["Y"]="\033[0;93m" ["YELLOW"]="\033[0;93m" \
+    ["bw"]="\033[5;29m" ["blinking-white"]="\033[5;29m" ["BW"]="\033[5;29m" ["BLINKING-WHITE"]="\033[5;29m" \
+    ["br"]="\033[5;31m" ["blinking-red"]="\033[5;31m" ["BR"]="\033[5;31m" ["BLINKING-RED"]="\033[5;31m" \
+    ["bg"]="\033[5;32m" ["blinking-green"]="\033[5;32m" ["BG"]="\033[5;32m" ["BLINKING-GREEN"]="\033[5;32m" \
+    ["bm"]="\033[5;33m" ["blinking-marron"]="\033[5;33m" ["BM"]="\033[5;33m" ["BLINKING-MARRON"]="\033[5;33m" ["blinking-brown"]="\033[5;33m" ["BLINKING-BROWN"]="\033[5;33m"\
+    ["bb"]="\033[5;36m" ["blinking-blue"]="\033[5;36m" ["BB"]="\033[5;36m" ["BLINKING-BLUE"]="\033[5;36m" \
+    ["by"]="\033[5;93m" ["blinking-yellow"]="\033[5;93m" ["BY"]="\033[5;93m" ["BLINKING-YELLOW"]="\033[5;93m" \
+)
+# -[ BOX ]----------------------------------------------------------------------------------------------------
+#      0   1   2   3                                      # ☒ 0:simple, 1:bold, 2:double, 3:round
+ULC=( "┌" "┏" "╔" "╭" )                                   # ☒ Upper Left Corner
+DLC=( "└" "┗" "╚" "╰" )                                   # ☒ Down Left Corner
+URC=( "┐" "┓" "╗" "╮" )                                   # ☒ Upper Right Corner
+DRC=( "┘" "┛" "╝" "╯" )                                   # ☒ Down Right Corner
+  H=( "─" "━" "═" "─" )                                   # ☒ Horizontal
+  V=( "│" "┃" "║" "│" )                                   # ☒ Vertical
+ UT=( "┬" "┳" "╦" "┬" )                                   # ☒ Upper T
+ DT=( "├" "┣" "╠" "├" )                                   # ☒ Down T
+ MC=( "┼" "╋" "╬" "┼" )                                   # ☒ Middle Cross
+ RT=( "┤" "┫" "╣" "┤" )                                   # ☒ Right T
+ LT=( "┴" "┻" "╩" "┴" )                                   # ☒ Left T
+# -[ TEXT TO DISPLAY ]----------------------------------------------------------------------------------------
+FINAL_MESSAGE=( "${Y}❖ ${U}INSTALLATION COMPLETE${E} ${Y}❖${E}" ) # ☒ Text to display at the end
 
 # ============================================================================================================
 # FUNCTIONS
@@ -89,7 +125,7 @@ del_symlink()
     if [[ -h "${1}" ]];then
         local solved_link=$(readlink -f "${1}")
         rm "${1}"
-        echol "${U}rm sym-link${E}: '${BB}$(short_path ${1})${E}' ➟  '${M}$(short_path ${solved_link})${E}'" "3"
+        echol "${U}rm sym-link${E}: '${LB}$(short_path ${1})${E}' ➟  '${M}$(short_path ${solved_link})${E}'" "3"
     fi
 }
 # -[ CREATE SYM-LINK ]----------------------------------------------------------------------------------------
@@ -99,16 +135,16 @@ create_symlink()
     if [[ -L "${2}" ]];then
         local old_link=$(readlink -f "${1}")
         if [[ "${old_link}" == "${1}" ]];then
-            echol "${U}Link already exist${E}: '${BB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3"
+            echol "${U}Link already exist${E}: '${LB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3"
         else
-            echol "${U}Link already exist${E}: '${BB}$(short_path ${2})${E}' ${R}↛${E} '${M}$(short_path ${1})${E}'" "3"
+            echol "${U}Link already exist${E}: '${LB}$(short_path ${2})${E}' ${R}↛${E} '${M}$(short_path ${1})${E}'" "3"
             echol "                                            ${G}⮡${E} '${M}${old_link}${E}'" "3"
         fi
     else
-        ln -s "${1}" "${2}" && echol "${U}Create sym-link${E}: '${BB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3" || { echol "${R}FAILED to create sym-link: '${BB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "3" && exit 3 ; }
+        ln -s "${1}" "${2}" && echol "${U}Create sym-link${E}: '${LB}$(short_path ${2})${E}' ➟ '${M}$(short_path ${1})${E}'" "3" || { echol "${R}FAILED to create sym-link: '${LB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "3" && exit 3 ; }
         if ! is_a_valid_symlink "${2}";then
-            echol "${R}Sym-link created not valid:'${BB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "5"
-            rm "${2}" && echol "${R}Sym-link '${BB}$(short_path ${2})${R}' REMOVED!" "5"
+            echol "${R}Sym-link created not valid:'${LB}$(short_path ${2})${R}' ➟ '${M}$(short_path ${1})${E}'" "5"
+            rm "${2}" && echol "${R}Sym-link '${LB}$(short_path ${2})${R}' REMOVED!" "5"
             return 3;
         fi
     fi
@@ -137,12 +173,12 @@ print_title()
 {
     local titre="${Y}${1}${E}"
     local size=$(get_len "${titre}")
-    echo -en "${TLC}" && pnt ${H} $(( size + 1 )) && echo -en "${TRC}\n"
-    echo -en "${V} ${titre} ${VS}" && pnt "${H}" $((LEN - $(get_len "${titre}") - 5 )) && echo -en "${TRC}\n"
-    echo -en "${VS}" && pnt ${H} $(( size + 1 )) && echo -en "${BRC}"
-    pnt "\x20" $((LEN - $(get_len "${titre}") - 5 )) && echo -en "${V}\n"
+    echo -en "${ULC[2]}" && pnt ${H[2]} $(( size + 1 )) && echo -en "${URC[2]}\n"
+    echo -en "${V[2]} ${titre} ${DT[2]}" && pnt "${H[2]}" $((LEN - $(get_len "${titre}") - 5 )) && echo -en "${URC[2]}\n"
+    echo -en "${DT[2]}" && pnt ${H[2]} $(( size + 1 )) && echo -en "${DRC[2]}"
+    pnt "\x20" $((LEN - $(get_len "${titre}") - 5 )) && echo -en "${V[2]}\n"
 }
-print_last() { echo -en "${BLC}" && pnt ${H} $(( LEN - 2 )) && echo -en "${BRC}\n" ; }
+print_last() { echo -en "${DLC[2]}" && pnt ${H[2]} $(( LEN - 2 )) && echo -en "${DRC[2]}\n" ; }
 # -[ ECHO LINE ]----------------------------------------------------------------------------------------------
 # echo line inside the box (arg2 optionnal=indentation with custom. list items symb.)
 echol()
@@ -151,24 +187,52 @@ echol()
     [[ ${#} -eq 1 ]] && local indent=1 || local indent=${2}
     local sym=${sym[$(((${indent} % ${#sym[@]})-1))]}
     local spaces=$(printf ' %.s' $(seq 1 ${indent}))
-    local line="${V}${spaces}${B}${sym}${E} ${1}"
+    local line="${V[2]}${spaces}${B}${sym}${E} ${1}"
     local size=$(get_len "${line}")
     echo -en "${line}"
     pnt "\x20" $(( LEN - size - 1 ))
-    [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${V}\n" || echo -en "\n"
+    [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${V[2]}\n" || echo -en "\n"
 }
 # -[ END_MESSAGE ]--------------------------------------------------------------------------------------------
-# echo all arg by line in a gold blinking box
-mess_in_gold_blinking_box()
+# Print last-arg in a box:
+# This function have -c or --color option (default none, accepte:r,red,b,blue,y,yellow,
+print_in_box()
 {
-    echo -en "${YY}╭" && pnt "─" $((LEN-2)) && echo -en "╮\n"
-    for arg in "${@}";do
-        local line="${YY}│${E} ${arg}"
+    local color_code="white"
+    local box_type="0"
+    local text=( )
+    # HANDLE OPTION
+    while [[ ${#} -gt 0 ]];do
+        case "${1}" in
+            -c|--color)
+                local color_code="${2}"
+                shift 2
+                ;;
+            -t|--type)
+                local box_type="${2}"
+                shift 2
+                ;;
+            *)
+                text+=("${1}")
+                shift
+                ;;
+        esac
+    done
+    # CHECK IF COLOR VALUE IS IN DICT-COLORS
+    local C="${COLORS["w"]}"
+    [[ -n "${COLORS[${color_code}]}" ]] && C=${COLORS[${color_code}]} || echo -e "${R}WRONG OPTION:--color='${M}${color_code}${R}' INVALID VALUE ⇒ keep default value:${U}WHITE.${E}"
+    # CHECK IF TYPE VALUE IN RANGE
+    [[ ( ! "${box_type}" =~ ^[0-9]+$ ) || ( ${box_type} -lt 0 ) || ( ${box_type} -gt 3 ) ]] && { echo -e "${R}WRONG OPTION:--type='${M}${box_type}${R}' INVALID VALUE ⇒ keep default value:${U}0 for 'SIMPLE-LINE-BOX'.${E}" && local box_type="0" ; }
+
+    # PRINT THE BOX
+    echo -en "${C}${ULC[${box_type}]}" && pnt "${H[${box_type}]}" $((LEN-2)) && echo -en "${URC[${box_type}]}\n"
+    for line in "${text[@]}";do
+        local line="${C}${V[${box_type}]}${E} ${line}"
         local size=$(get_len "${line}")
-        echo -en "${line}" && pnt "\x20" $(( LEN - size - 1 )) && echo -en "${YY}│${E}"
+        echo -en "${line}" && pnt "\x20" $(( LEN - size - 1 )) && echo -en "${C}${V[${box_type}]}${E}"
         [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${sym}\n" || echo -en "\n"
     done
-    echo -en "${YY}╰" && pnt "─" $((LEN-2)) && echo -en "╯\n"
+    echo -en "${C}${DLC[${box_type}]}" && pnt "${H[${box_type}]}" $((LEN-2)) && echo -en "${DRC[${box_type}]}\n"
 }
 # =[ UTILS MANIP. FILES AND FOLDERS FCTS ]====================================================================
 # -[ INSERT_LINE_IN_FILE_UNDER_MATCH ]------------------------------------------------------------------------
@@ -235,7 +299,7 @@ exec_anim()
     ${@} > "${tmpfile}" 2>&1 &
     local pid=${!}
     while kill -0 ${pid} 2>/dev/null; do
-        for frame in "${frames[@]}"; do echo -en "${V} " && printf "${frame}\r" && sleep ${delay} ; done
+        for frame in "${frames[@]}"; do echo -en "${V[2]} " && printf "${frame}\r" && sleep ${delay} ; done
     done
     printf "\r" && wait ${pid}
     local exit_code=${?}
@@ -256,10 +320,11 @@ install_cmd()
         echol "pck ${B}${pck_name}${E} already installed." "3"
     else
         sudo apt-get install -y "${pck_name}" > /dev/null 2>&1 && \
-        echol "pck ${B}${pck_name}${E} successfully installed." "3" || \
+        { echol "pck ${B}${pck_name}${E} successfully installed." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${pck_name}${R}\`${E} package successfully installed." ) ; } || \
         echol "${R}FAILED to install pck ${B}${pck_name}${E}." "3"
     fi
 }
+
 # -[ PACKAGE_INSTALLED ]--------------------------------------------------------------------------------------
 # Check if a package was installed
 pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "install ok installed" ; }
@@ -271,7 +336,7 @@ install_pck()
         echol "pck ${B}${1}.deb${E} was already installed." "3"
     else
         pkexec dpkg -i ${1}.deb > /dev/null 2>&1 && \
-            echol 'pck ${B}${1}.deb${E} installed successfully' '3' || \
+            { echol 'pck ${B}${1}.deb${E} installed successfully' '3' && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${1}.deb${R}\`${E} package successfully installed." ) ; } || \
             echol '${R}FAILED to install ${M}${1}${R} package.${E}' '3'
     fi
 }
@@ -287,6 +352,7 @@ add_custom_cmd()
         echol "${U}Add custom command:${E} ${G}${cmd_name}${E} is already install." "3"
     else
         create_symlink ${filepath} ${CUSTOM_CMD_BIN_FOLDER}/${cmd_name}
+        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}${cmd_name}${R}\`${E} custom command successfully installed." )
     fi
 }
 # -[ SCRIPT_FOUND_AS_CMD ]------------------------------------------------------------------------------------
@@ -332,12 +398,14 @@ install_pre_requis_cmds()
     echol "${Y}Check all commands/packages needed${E}:"
     install_pck "apt"
     for cmd in "${!PRE_REQUIS_CMDS[@]}";do 
-        exec_anim "install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}" ; done
+        exec_anim "install_cmd ${cmd} ${PRE_REQUIS_CMDS[${cmd}]}"
+    done
     print_last
 }
 # -[ CONFIG_ZSH ]---------------------------------------------------------------------------------------------
 config_zsh()
 {
+    FINAL_MESSAGE+=("  ${Y}☑ ZSH${E}" )
     print_title "ZSH config."
     echol "${Y}Install&Set zsh${E}:"
     install_cmd "zsh"
@@ -347,6 +415,7 @@ config_zsh()
         sudo usermod -s "${which_zsh}" "$(whoami)" > /dev/null 2>&1 && \
             echol "${G}zsh${E} successfully set as default shell" "3" || \
             { echol "${R}FAILED to set ${B}zsh${R} as default shell" "3" && exit 3 ; }
+        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} command has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to restart your session. ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     else
         echol "${G}zsh${E} already set as default shell." "3"
     fi
@@ -357,6 +426,7 @@ config_zsh()
     else
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended > /dev/null 2>&1
         [[ -d ~/.oh-my-zsh ]] && echol "${E}Oh-My-Zsh${E} successfully installed." "3" || echol "${R}FAILED to install ${B}Oh-My-Zsh${R}.${E}" "3"
+        FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}Oh-My-Zsh${R}\`${E} module has been successfully installed." "    ${Y}⤿${E} But to see changes, you may have to restart your session. ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     fi
 
     echol "${Y}Save&Remove old config.:${E}"
@@ -372,6 +442,7 @@ config_zsh()
 # -[ CONFIG_GIT ]---------------------------------------------------------------------------------------------
 config_git()
 {
+    FINAL_MESSAGE+=("  ${Y}☑ GIT${E}" )
     print_title "GIT config."
     echol "${Y}Install commands/packages needed${E}:"
     exec_anim "install_cmd git"
@@ -388,6 +459,7 @@ config_git()
 # -[ CONFIG_VIM ]---------------------------------------------------------------------------------------------
 config_vim()
 {
+    FINAL_MESSAGE+=("  ${Y}☑ VIM${E}" )
     print_title "VIM config."
 
     echol "${Y}Install commands/packages needed${E}:"
@@ -417,6 +489,7 @@ config_vim()
 # -[ CONFIG_TASK ]--------------------------------------------------------------------------------------------
 config_taskw()
 {
+    FINAL_MESSAGE+=("  ${Y}☑ Task&Time-Warrior${E}" )
     print_title "TASKWARRIOR config."
     
     echol "${Y}Install commands/packages needed${E}:"
@@ -439,6 +512,7 @@ config_taskw()
 # -[ INSTALL OTHER TOOLS ]------------------------------------------------------------------------------------
 install_other_tools()
 {
+    FINAL_MESSAGE+=("  ${Y}☑ Other Tools&Projects${E}" )
     print_title "Install Other Project/Tools:"
 
     echol "${Y}WikiLinkConvertor as ${G}wlc${E} command:${E}"
@@ -451,6 +525,7 @@ config_desk_env()
 {
     # GNOME
     if [[ "${XDG_CURRENT_DESKTOP}" =~ GNOME|Unity|XFCE ]]; then
+        FINAL_MESSAGE+=("  ${Y}☑ Gnome Desktop Env.${E}" )
         print_title "Configure GNOME Desktop Environnement:"
 
         echol "${Y}Gnome config. tools:${E}"
@@ -471,7 +546,7 @@ config_desk_env()
         local gnome_terminal_profil_ID=${gnome_terminal_profile_file##*\/}
         local gnome_terminal_profil_ID=${gnome_terminal_profil_ID%\.*}
         dconf load "/org/gnome/terminal/legacy/profiles:/:${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
-            echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" || \
+            { echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" && FINAL_MESSAGE+=("    ${Y}‣${E} ${R}\`${B}Gnome-Terminal${R}\`${E} app. has been successfully configured." "    ${Y}⤿${E} But to see changes, or fix its font, you may have to restart your terminal (or restart your session)." "          ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" ) ; } || \
             echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
     else
         print_title "Configure Unknown Desktop Environnement:"
@@ -491,11 +566,7 @@ if command_exists "dpkg";then
     config_taskw
     install_other_tools
     config_desk_env
-    mess_in_gold_blinking_box \
-        "${Y}❖ ${G}Installation complete, to see all the changes, you'll have to restart your gnome-session:" \
-        "   ${Y}‣${E}If your font is weird          ${B}➪${E}   Fix it by login-out/login-in" \
-        "   ${Y}‣${E}If your SHELL is not zsh yet   ${B}➪${E}   Fix it by login-out/login-in" \
-        "${Y}🡆 ${R}To log-out you can just type: ${E}'${B}sudo pkill -u $(whoami)${E}'"
+    print_in_box -t 1 -c by "${FINAL_MESSAGE[@]}"
     sudo -k #Kill the period of time where password not needed.
 else
     echo "${R}This installation script works only on debian or Debian-based systems for now!${E}"
