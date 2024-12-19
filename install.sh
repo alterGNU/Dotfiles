@@ -402,7 +402,7 @@ add_aliases()
 {
     if [[ ! -d "${ACTIVE_ALIASES_FOLDER}" ]];then
         mkdir_if_not_exist "${ACTIVE_ALIASES_FOLDER}"
-        insert_line_in_file_under_match "${ACTIVE_ALIASES_FOLDER##*\/}/" .gitignore
+        insert_line_in_file_under_match "${ACTIVE_ALIASES_FOLDER##*\/}/" ${DOTPATH}.gitignore
     fi
     create_symlink "${ACTIVE_ALIASES_FOLDER}" "${HOME}/.aliases"
     local folder_name=${1##*\/}
