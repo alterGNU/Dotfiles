@@ -204,7 +204,7 @@ echol()
     local size=$(get_len "${line}")
     echo -en "${line}" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
     pnt "\x20" $(( LEN - size - 1 )) | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
-    if [[ ${LEN} -gt $(( size + 1 )) ]];then
+    if [[ ${LEN} -gt $((size - 1)) ]];then
         echo -en "${V[2]}\n" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
     else
         echo -en "\n" | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
@@ -247,8 +247,8 @@ print_in_box()
         local line="${C}${V[${box_type}]}${E} ${line}"
         local size=$(get_len "${line}")
         echo -en "${line}" && pnt "\x20" $(( LEN - size - 1 ))
-        [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${C}${V[${box_type}]}${E}"
-        [[ ${LEN} -gt $(( size + 1 )) ]] && echo -en "${sym}\n" || echo -en "\n"
+        [[ ${LEN} -gt $((size - 1)) ]] && echo -en "${C}${V[${box_type}]}${E}"
+        [[ ${LEN} -gt $((size - 1)) ]] && echo -en "${sym}\n" || echo -en "\n"
     done
     echo -en "${C}${DLC[${box_type}]}" && pnt "${H[${box_type}]}" $((LEN-2)) && echo -en "${DRC[${box_type}]}${E}\n"
 }
@@ -447,7 +447,7 @@ config_zsh()
         sudo usermod -s "${which_zsh}" "$(whoami)" >> ${LOG_FILE} 2>&1 && \
             echol "${G}zsh${E} successfully set as default shell" "3" || \
             { echol "${R}FAILED to set ${B}zsh${R} as default shell" "3" && exit 3 ; }
-        FINAL_MESSAGE+=("    ${Y}✔${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} command has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session.${E} ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
+        FINAL_MESSAGE+=("    ${Y}✔${E} ${R}\`${M}sudo usermod -s ${B}$(which zsh)${R}\`${E} cmd has been executed successfully during the installation." "    ${Y}⤿${E} But to see changes, you may have to ${U}restart your session.${E} ${B}➪ ${E}${R}\`${M}sudo pkill -u ${B}$(whoami)${E}${R}\`" )
     else
         echol "${G}zsh${E} already set as default shell." "3"
     fi
@@ -581,7 +581,7 @@ config_desk_env()
         local gnome_terminal_profil_ID=${gnome_terminal_profile_file##*\/}
         local gnome_terminal_profil_ID=${gnome_terminal_profil_ID%\.*}
         dconf load "/org/gnome/terminal/legacy/profiles:/:${gnome_terminal_profil_ID}/" < "${gnome_terminal_profile_file}" && \
-            { echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" && FINAL_MESSAGE+=("    ${Y}✔${E} ${B}Gnome-Terminal${E} app. has been successfully configured." "    ${Y}⤿${E} If its font has been changed and looks weird...to fix it you have to ${U}restart your gnome-terminal.${E}" ) ; } || \
+            { echol "${B}$(short_path ${gnome_terminal_profile_file})${E} file successfully import." "3" && FINAL_MESSAGE+=("    ${Y}✔${E} ${B}Gnome-Terminal${E} app. has been successfully configured." "    ${Y}⤿${E} If the font looks weird ${U}restart your gnome-terminal.${E}" ) ; } || \
             echol "${R}FAILED import gnome_terminal_profile_file ${B}$(short_path ${gnome_terminal_profile_file})${E}." "3"
     else
         print_title "Configure Unknown Desktop Environnement:"
