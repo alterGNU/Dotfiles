@@ -28,11 +28,15 @@
 #       - [ ] MODULAR INSTALL       : Allow user to choose the configuration with arg to chose the option to install:
 #                                     ⤷ if nothing then install all (Ex :`./install.sh`)
 #                                     ⤷ else, install pre-requis always then [-z:zsh, -g:git, -v:vim, -t:taskw, -o:other_tools, -d:desk_env] (Ex: `./install.sh -zgod`)
+#       - [ ] WEB BROWSER APP       : Install & config web browser.(Vimium json already in dotfiles)
+#                                     ⤷ Find an alternative to chrome...really slow.
 #   - INSTALL FUN:
 #       - config_taskw()
 #           - [ ] Add taskserver package and config file (server & client)
 #       - config_desk_env()
-#           - [ ] Handle other desktop terminal (raspbian-11 not handle)
+#           - [ ] Handle other desktop terminal (raspbian-11 not handle: LXTerm)
+#                 ⤷ As gnome use dconf, find a way to export in order to import LXTerm for raspbian
+#           - [ ] Install font outside (same for all I think...works for raspbian + add var top + display_var)
 # FIXME :
 # - [ ] Backup folder and file names start with a dot (hidden) 🡲 remove starting dot if exist.
 # - [ ] Enhanced the log file
