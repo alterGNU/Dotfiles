@@ -39,11 +39,7 @@
 #           - [ ] Install font outside (same for all I think...works for raspbian + add var top + display_var)
 # FIXME :
 # - [ ] Backup folder and file names start with a dot (hidden) 🡲 remove starting dot if exist.
-# - [ ] Enhanced the log file
-#       ⤷ Find a way that tee insert box element too(cleaning)
-#       ⤷ clean /../../<cmd> generate by install_cmd when command install
-#       ⤷ add mkdir return from mkdir_if_not_created
-#       ⤷ add create_symlink returns
+# - [ ] Enhanced the log file : find a way that tee insert box element too (cleaning)
 # ============================================================================================================
  
 # ============================================================================================================
@@ -500,8 +496,8 @@ config_vim()
 
     echol "${Y}Install commands/packages needed${E}:"
     install_cmd vim
-    install_cmd cscope
-    install_cmd ctags universal-ctags
+    install_cmd cscope                  # Needed to cscope
+    install_cmd ctags universal-ctags   # Needed by tagbar plugin
     # Check if vim is +clipboard compatible, else install vim-gtk3
     if vim --version | grep -q "+clipboard";then
         echol "${G}vim${E} is clipboard compatible." "3"
