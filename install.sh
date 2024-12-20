@@ -221,7 +221,7 @@ print_in_box()
 {
     local color_code="white"
     local box_type="0"
-    local text=( )
+    local text=()
     # HANDLE OPTION
     while [[ ${#} -gt 0 ]];do
         case "${1}" in
@@ -334,7 +334,7 @@ exec_anim()
 }
 # -[ COMMAND_EXISTS ]-----------------------------------------------------------------------------------------
 # Check if a command is installed
-command_exists(){ command -v "${1}" >> ${LOG_FILE} 2>&1 ; }
+command_exists(){ command -v "${1}" > /dev/null 2>&1 ; }
 # -[ INSTALL_CMD ]--------------------------------------------------------------------------------------------
 # Check if command is installed, else install it
 install_cmd()
@@ -501,6 +501,7 @@ config_vim()
     echol "${Y}Install commands/packages needed${E}:"
     install_cmd vim
     install_cmd cscope
+    install_cmd ctags universal-ctags
     # Check if vim is +clipboard compatible, else install vim-gtk3
     if vim --version | grep -q "+clipboard";then
         echol "${G}vim${E} is clipboard compatible." "3"
