@@ -26,7 +26,7 @@ usage()
 {
     local txt=${1}
     [[ ${#} -eq 2 ]] && local exit_nb=${2} || local exit_nb=42
-    echo -e "${R0}Wrong Usage, err_${exit_nb}${R0}: ${txt}${E}\n${V0}Usage${E}:  \`${B0}./git_add_submodule <${M0}sub_url${B0}> [<${M0}sub_path${B0}>]${E}\`"
+    echo -e "${R0}Wrong Usage, err_${exit_nb}${R0}: ${txt}${E}\n${V0}Usage${E}:  \`${B0}./git_add_submodule.sh <${M0}sub_url${B0}> [<${M0}sub_path${B0}>]${E}\`"
     echo -e "- ${B0}<${M0}sub_url${B0}> is mandatory${E} "
     echo -e "- ${B0}<${M0}sub_path${B0}> is optionnal (by default: ./repo_name)${E} "
     echo -e "- ${B0}Examples:${E}"

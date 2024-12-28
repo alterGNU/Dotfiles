@@ -552,7 +552,12 @@ install_other_tools()
     add_all_script_found_as_cmd "${DOTPATH}/wlc"
 
     echol "${Y}Install usefull commands:${E}"
-    install_cmd "tree"
+    install_cmd tree
+
+    echol "${Y}Cscope and commands:${E}"
+    install_cmd cscope
+    add_all_script_found_as_cmd ${DOTPATH}/cscope
+    add_aliases ${DOTPATH}/cscope
 
     print_last | tee >(sed $'s/\033[[][^A-Za-z]*m//g' >> ${LOG_FILE})
 }
