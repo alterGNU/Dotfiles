@@ -1,2 +1,6 @@
+# Ignore list of active custom aliases
 active_custom_aliases/
+# Ignore install logs
 logs/
+# Ignore files generate by fontconfig
+desk-env/fonts/**/.uuid
