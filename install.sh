@@ -70,15 +70,15 @@ LOG_FILE="${LOG_FOLDER}/$(date +%Y_%m_%d.%Hh%Mm%Ss).log"  # ☒ Log file (create
 # =[ LAYOUT ]=================================================================================================
 LEN=100                                                   # ☑ Width of the box(line size of this script stdout)
 # -[ COLORS ]-------------------------------------------------------------------------------------------------
-R="\033[1;31m"                                            # ☒ START RED
-G="\033[1;32m"                                            # ☒ START GREEN
-M="\033[1;33m"                                            # ☒ START BROWN
-U="\033[4;29m"                                            # ☒ START UNDERSCORED
-B="\033[1;36m"                                            # ☒ START BLUE
-Y="\033[0;93m"                                            # ☒ START YELLOW
+ R="\033[1;31m"                                           # ☒ START RED
+ G="\033[1;32m"                                           # ☒ START GREEN
+ M="\033[1;33m"                                           # ☒ START BROWN
+ U="\033[4;29m"                                           # ☒ START UNDERSCORED
+ B="\033[1;36m"                                           # ☒ START BLUE
+ Y="\033[0;93m"                                           # ☒ START YELLOW
 BY="\033[5;93m"                                           # ☒ START BLINKING YELLOW
 LB="\033[1;96m"                                           # ☒ START LIGHT BLUE
-E="\033[0m"                                               # ☒ END COLOR BALISE
+ E="\033[0m"                                              # ☒ END COLOR BALISE
 # Dict key:colors name/abbrev -> value:color-balise (used by print_in_box to convert option value into color-balise)
 declare -A COLORS=( \
     ["w"]="\033[1;29m" ["white"]="\033[1;29m" ["W"]="\033[1;29m" ["WHITE"]="\033[1;29m" \
