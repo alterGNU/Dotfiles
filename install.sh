@@ -389,7 +389,7 @@ add_all_script_found_as_cmd()
         # Clean bin_folder of broken link
         rm_broken_link_from_folder ${CUSTOM_CMD_BIN_FOLDER}
         # Check if bin_folder in var-env path, else add it by writting in zshrc file.
-        [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]] && insert_line_in_file_under_match "export PATH=\"\${PATH}:${CUSTOM_CMD_BIN_FOLDER}\"" "${DOTPATH}/zsh/zshrc" "^.....PATH"
+        [[ ":${PATH}:" != *":${CUSTOM_CMD_BIN_FOLDER}:"* ]] && insert_line_in_file_under_match "export PATH=\"${CUSTOM_CMD_BIN_FOLDER}:\${PATH}\"" "${DOTPATH}/zsh/zshrc" "^.....PATH"
         # Transform script into custom command by creating link inside
         for file in $(find "${1}" -type f -name "*.sh");do add_custom_cmd ${file} $(basename --suffix=".sh" ${file});done
     else
@@ -553,6 +553,7 @@ install_other_tools()
 
     echol "${Y}Install usefull commands:${E}"
     install_cmd tree
+    install_cmd valgrind
 
     echol "${Y}Cscope and commands:${E}"
     install_cmd cscope
