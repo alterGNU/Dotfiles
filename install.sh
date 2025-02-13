@@ -346,7 +346,22 @@ install_cmd()
         echol "${R}FAILED to install pck ${B}${pck_name}${E}." "3"
     fi
 }
-
+# TODO: DEPRECATE on debian-based distros , can not use `pip3 install --user` to avoid breaking the system Python environment.
+## -[ INSTALL_PYTHON_MODULE ]----------------------------------------------------------------------------------
+## Check if a python module is installed for user, else install it (for user)
+#install_python_module()
+#{
+#    local module=${1}
+#    if command_exists "python3";then
+#        if command_exists "pip3";then
+#            python3 -c "import ${module}" 2>/dev/null && echol "python module: ${B}'${module}'${E} is already installed" "3" || { exec_anim "pip3 install --user ${module}" && echol "python module ${B}'${module}'${E} successfully installed." "3" || echol "${R}FAILED to install python module ${B}'${module}'${E}." "3" ; }
+#        else
+#            echol "${R}FAILED to install python_module:${B}'${module}'${E} : ${R}pip3 command not install${E}." "3"
+#        fi
+#    else
+#        echol "${R}FAILED to install python_module:${B}'${module}'${E} : ${R}python3 command not install${E}." "3"
+#    fi
+#}
 # -[ PACKAGE_INSTALLED ]--------------------------------------------------------------------------------------
 # Check if a package was installed
 pck_installed(){ dpkg-query -W -f='${Status}' "${1}" 2>/dev/null | grep -q "install ok installed" ; }
@@ -528,6 +543,14 @@ config_taskw()
     echol "${Y}Install commands/packages needed${E}:"
     install_cmd task taskwarrior
     install_cmd timew timewarrior
+    install_cmd python3
+    # TODO : DEPRECATE METHODE, use apt python3-xxx instead.
+    #install_cmd pip3 python3-pip
+    #PYTHON_MODULES=( "taskw" "datetime" "json" "re" "subprocess" "sys" )
+    #for module in "${PYTHON_MODULES[@]}";do install_python_module ${module}; done
+    # REPLACED BY : install_cmd python3-taskw
+    install_cmd python3-taskw
+
     # TODO add taskserveur (client & serveur)
 
     echol "${Y}Save&Remove old config.:${E}"
