@@ -9,3 +9,5 @@
     d = diff
 [core]
     editor = vim
+[pull]
+	rebase = true
