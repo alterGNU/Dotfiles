@@ -3,6 +3,7 @@
 ## Files and Folders
 ```bash
 Dotfiles/
+   ├── code/                            # file for vscode (past in ~/.config/Code/User/....)
    ├── cmds/                            # Custom command ...
    │   ├── git/                         # ... related to git.
    │   ├── taskw/                       # ... related to task and time warrior.

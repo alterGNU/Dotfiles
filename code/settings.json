@@ -1,0 +1,71 @@
+{
+    "files.autoSave": "onFocusChange",
+    "files.autoSaveDelay": 1000,
+    "files.trimTrailingWhitespace": false,
+    "files.insertFinalNewline": false,
+    "makefile.configureOnOpen": true,
+    "editor.insertSpaces": false,
+    "editor.renderWhitespace": "all",
+    "editor.tabSize": 4,
+    "vim.easymotion": true,
+    "vim.incsearch": true,
+    "vim.useSystemClipboard": true,
+    "vim.useCtrlKeys": true,
+    "vim.hlsearch": true,
+    "vim.insertModeKeyBindings": [
+        //{
+        //"before": ["j", "j"],
+        //"after": ["<Esc>"]
+        //}
+    ],
+    "vim.visualModeKeyBindingsNonRecursive": [
+        //{
+        //"before": [";", ";"],
+        //"commands": [":s:::g"]
+        //},
+    ],
+    "vim.normalModeKeyBindingsNonRecursive": [
+        {
+        "before": ["<leader>", "d"],
+        "after": ["d", "d"]
+        },
+        {
+        "before": ["<C-n>"],
+        "commands": [":nohl"]
+        },
+        {
+        "before": ["K"],
+        "commands": ["lineBreakInsert"],
+        "silent": true
+        }
+    ],
+    "vim.leader": "`",
+    "vim.handleKeys": {
+        "<C-a>": true,
+        "<C-f>": false
+    },
+    "extensions.experimental.affinity": {
+        "vscodevim.vim": 1
+    },
+    "vim.vimrc.enable": true,
+    "vim.vimrc.path": "~/.config/Code/User/vimrc",
+    "codam-norminette-3.command": "norminette",
+    "codam-norminette-3.commandTimeoutMs": 10000,
+    "codam-norminette-3.fileregex": "\\.[ch]$",
+    "codam-norminette-3.ignoreErrors": [
+        // "WRONG_SCOPE_COMMENT",
+        // "LINE_TOO_LONG"
+    ],
+    "codam-norminette-3.highlight-color": "rgba(255, 0, 0, 0.2)",
+    "codam-norminette-3.displayErrorName": true,
+    "42header.username": "lagrondi",
+    "42header.email": "lagrondi.student.42.fr",
+    "editor.minimap.enabled": false,
+    "liveshare.allowGuestTaskControl": true,
+    "github.copilot.chat.agent.autoFix": false,
+    "github.copilot.chat.agent.currentEditorContext.enabled": false,
+    "vim.commandLineModeKeyBindings": [
+    
+    ],
+    "workbench.colorTheme": "Gruvbox Dark Soft"
+}
