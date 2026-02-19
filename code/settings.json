@@ -14,15 +14,15 @@
     "vim.hlsearch": true,
     "vim.insertModeKeyBindings": [
         //{
-        //"before": ["j", "j"],
-        //"after": ["<Esc>"]
+        //"before": ["<F4>"],
+        //"command": "github.copilot.toggleInlineSuggest"
         //}
     ],
     "vim.visualModeKeyBindingsNonRecursive": [
         //{
-        //"before": [";", ";"],
-        //"commands": [":s:::g"]
-        //},
+        //"before": ["<F4>"],
+        //"command": "github.copilot.toggleInlineSuggest"
+        //}
     ],
     "vim.normalModeKeyBindingsNonRecursive": [
         {
@@ -33,6 +33,11 @@
         "before": ["<C-n>"],
         "commands": [":nohl"]
         },
+        //{
+        //"before": ["<F4>"],
+        //"command": "workbench.action.executeCommand",
+        //"args": "github.copilot.toggleInlineSuggest"
+        //},
         {
         "before": ["K"],
         "commands": ["lineBreakInsert"],
@@ -64,8 +69,158 @@
     "liveshare.allowGuestTaskControl": true,
     "github.copilot.chat.agent.autoFix": false,
     "github.copilot.chat.agent.currentEditorContext.enabled": false,
+    "github.copilot.inlineSuggest.enable": true,
+    "editor.inlineSuggest.enabled": true,
     "vim.commandLineModeKeyBindings": [
     
     ],
-    "workbench.colorTheme": "Gruvbox Dark Soft"
+    "workbench.colorTheme": "Gruvbox Dark Soft",
+    "github.copilot.enable": {
+        "*": true,
+        "plaintext": false,
+        "markdown": false,
+        "scminput": false
+    },
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "github.copilot.selectedCompletionModel": "",
+    "todo-tree.tree.buttons.export": true,
+    "todo-tree.general.exportPath": "${workspaceFolder}/todo-tree-export.txt",
+    "todo-tree.regex.regex": "(\\*|//|#|<!--|;|/\\*|^|^\\s*(-|\\d+.))\\s*($TAGS)",
+    "todo-tree.regex.enableMultiLine" : true,
+    "todo-tree.regex.regexCaseSensitive" : true,
+    "todo-tree.general.tags": [
+        "DONE", "FIXED", "CHECKED", "NORMED",
+        "WARNING",
+        "NORM", "NORM-ME", "NOT-NORM",
+        "PERF", "OPTI", "IMPROVED",
+        "PERF-ME", "NOT-OPTI", "NEED-IMPROVEMENT",
+        "FIX", "BUG", "FIXME", "FIXIT", "FIX-ME", "FIX-IT",
+        "NOTE", "HACK", "INFO",
+        "TODO", "TO-DO", "CHECK", "CHECKIF", "CHECK-IF", "ADD",
+        "LIST", "CHECKLIST", "CHECK-LIST", "TODOLIST", "TODO-LIST",
+        "ITEM-OK-LIST", "- [X]", "-[X]", "- [x]", "-[x]",
+        "ITEM-KO-LIST", "-[]", "- []", "-[ ]", "- [ ]"
+    ],
+    "todo-tree.general.tagGroups": {
+        "DONE": [ "DONE", "FIXED", "CHECKED", "NORMED" ],
+        "WARNING": [ "WARNING" ],
+        "NORM": [ "NORM", "NORM-ME", "NOT-NORM" ],
+        "PERF": [ "PERF", "OPTI", "IMPROVED"],
+        "PERF-ME" : ["PERF-ME", "NOT-OPTI", "NEED-IMPROVEMENT"],
+        "FIX": [ "BUG", "FIX","FIXME", "FIX-ME", "FIXIT", "FIX-IT"],
+        "NOTE": [ "NOTE:", "HACK", "INFO"],
+        "TODO": [ "TODO", "TO-DO", "CHECK", "CHECKIF", "CHECK-IF", "ADD" ],
+        "LIST": [ "LIST", "CHECK-LIST", "TODO-LIST", "CHECKLIST", "TODOLIST" ],
+        "ITEM-OK-LIST": [ "- [X]","-[X]","- [x]","-[x]"],
+        "ITEM-KO-LIST": [ "-[]", "- []", "-[ ]", "- [ ]"],
+    },
+        "todo-tree.highlights.customHighlight": {
+        "DONE": {
+            "icon": "shield-check",
+            //"icon": "verified",
+            //"icon": "sign-in",
+            "iconColour": "#6fac59",
+            "type": "tag-and-subTag",
+            "foreground": "#3c3836",
+            "background": "#6fac59",
+            "fontWeight": "bold",
+            "hideFromTree": true
+        },
+        "WARNING": {
+            "icon": "alert",
+            "iconColour": "#bb2520",
+            "type": "tag-and-subTag",
+            "foreground": "#bb2520",
+            "background": "#b9851b",
+            "gutterIcon": true,
+            "fontWeight": "bold",
+        },
+        "NORM": {
+            "icon": "pin",
+            "iconColour": "#bb2520",
+            "type": "tag-and-subTag",
+            "foreground": "#3c3836",
+            "background": "#bb2520",
+            "gutterIcon": true,
+            "fontWeight": "bold",
+        },
+        "PERF": {
+            "icon": "rocket",
+            //"icon": "verified",
+            //"icon": "sign-in",
+            "iconColour": "#a233ac",
+            "type": "tag-and-subTag",
+            "foreground": "#a233ac",
+            "fontWeight": "bold",
+            "gutterIcon": true,
+            "hideFromTree": true
+        },
+        "PERF-ME": {
+            "icon": "rocket",
+            //"icon": "verified",
+            //"icon": "sign-in",
+            "iconColour": "#bb2520",
+            "type": "tag-and-subTag",
+            "foreground": "#bb2520",
+            "background": "#b9851b",
+            "fontWeight": "bold",
+            "gutterIcon": true,
+        },
+        "FIX": {
+            "icon": "flame",
+            "iconColour": "#bb2520",
+            "type": "tag-and-subTag",
+            "foreground": "#3c3836",
+            "background": "#bb2520",
+            "gutterIcon": true,
+            "fontWeight": "bold",
+        },
+        "TODO": {
+            "type":"tag-and-subTag",
+            "icon": "shield",
+            //"icon": "sign-out",
+            "iconColour": "#b9851b",
+            "foreground": "#3c3836",
+            "background": "#b9851b",
+            "gutterIcon": true,
+            "fontWeight": "bold",
+        },
+        "NOTE": {
+            "icon": "comment",
+            "iconColour": "#458588",
+            "type": "tag-and-subTag",
+            "foreground": "#3c3836",
+            "background": "#458588",
+            "gutterIcon": true,
+            "fontWeight": "bold",
+            "hideFromTree": true
+        },
+        "LIST": {
+            "icon": "tasklist",
+            "iconColour": "#b9851b",
+            "type": "tag",
+            "foreground": "#b9851b",
+            "textDecoration": "underline",
+            "gutterIcon": true,
+            "fontWeight": "bold",
+        },
+        "ITEM-OK-LIST": {
+            "icon": "check",
+            "iconColour": "#6fac59",
+            "type": "tag",
+            "foreground": "#6fac59",
+            "fontWeight": "bold",
+            "hideFromTree": true
+        },
+        "ITEM-KO-LIST": {
+            "icon": "square",
+            "iconColour": "#b9851b",
+            "type":"tag",
+            "foreground": "#b9851b",
+            "fontWeight": "bold",
+            "hideFromTree": true
+        },
+    },
+    "window.commandCenter": false,
+    "chat.viewSessions.orientation": "stacked",
 }
